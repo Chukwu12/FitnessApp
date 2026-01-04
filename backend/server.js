@@ -5,6 +5,7 @@ const express = require("express");
 const cors = require("cors");
 
 const gifsRouter = require("./scripts/routes/gifs");
+const aiRouter = require("./scripts/routes/ai");
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.get("/health", (_req, res) => {
 
 // routes
 app.use("/api/gifs", gifsRouter);
+app.use("/api/ai", aiRouter);
 
 // ✅ bind to all interfaces (required for CodeSandbox)
 app.listen(PORT, "0.0.0.0", () => {

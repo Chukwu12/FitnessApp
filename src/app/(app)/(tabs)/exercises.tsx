@@ -73,7 +73,12 @@ export default function Exercises() {
   const renderItem = ({ item }: { item: Exercise }) => (
     <ExerciseCard
       item={item}
-      onPress={() => router.push(`/exercise-detail?id=${item._id}`)}
+      onPress={() =>
+        router.push({
+          pathname: "/exercise-details",
+          params: { id: item._id },
+        })
+      }
     />
   );
 

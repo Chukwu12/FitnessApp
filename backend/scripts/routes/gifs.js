@@ -8,8 +8,7 @@ router.get("/exercise/:exerciseId", async (req, res) => {
   try {
     const { exerciseId } = req.params;
 
-    const rapidKey =
-      process.env.EXPO_PUBLIC_RAPID_API_KEY || process.env.RAPID_API_KEY;
+    const rapidKey = process.env.RAPID_API_KEY;
 
     if (!rapidKey) {
       return res.status(500).json({ error: "Missing RapidAPI key" });
