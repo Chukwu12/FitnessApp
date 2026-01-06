@@ -286,7 +286,7 @@ export default function ExerciseDetail() {
           <View className="mt-8 gap-2">
             {/* AI Coach button */}
             <TouchableOpacity
-              className={`rounded-xl py-4 items-center ${
+              className={`rounded-xl py-4 items-center justify-center ${
                 aiLoading
                   ? "bg-gray-400"
                   : aiGuidance
@@ -300,11 +300,11 @@ export default function ExerciseDetail() {
                 <View className="flex-row items-center">
                   <ActivityIndicator size="small" color="white" />
                   <Text className="text-white font-bold text-lg ml-2">
-                    Loading ...
+                    Loading...
                   </Text>
                 </View>
               ) : (
-                <Text className="text-white font-bold text-lg">
+                <Text className="text-white font-bold text-lg text-center">
                   {aiGuidance
                     ? "Refresh AI Guidance"
                     : "Get AI Guidance on Form & Technique"}

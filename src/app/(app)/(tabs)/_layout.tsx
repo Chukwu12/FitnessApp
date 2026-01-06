@@ -1,82 +1,67 @@
-import React from "react";
 import { Tabs } from "expo-router";
-import AntDesign from '@expo/vector-icons/AntDesign';
-import { Colors } from "react-native/Libraries/NewAppScreen";
+import AntDesign from "@expo/vector-icons/AntDesign";
 
-function Layout() {
-    return (
-        <Tabs>
-            <Tabs.Screen name="index"
-                options={{
-                    headerShown: false, title: "Home",
+export default function Layout() {
+  return (
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: { height: 64, paddingBottom: 3, paddingTop: 3 },
+        tabBarLabelStyle: { fontSize: 11 },
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: "Home",
+          tabBarIcon: ({ color, size }) => (
+            <AntDesign name="home" color={color} size={size} />
+          ),
+        }}
+      />
 
-                    tabBarIcon: ({ color, size }) => (
-                        <AntDesign name="home" color={color} size={size} />
-                    ),
-                }}
-            />
+      <Tabs.Screen
+        name="exercises"
+        options={{
+          title: "Exercises",
+          tabBarIcon: ({ color, size }) => (
+            <AntDesign name="book" color={color} size={size} />
+          ),
+        }}
+      />
 
-            <Tabs.Screen
-            name="exercises"
-            options={{
-                title: "Exercises",
-                headerShown: false,
-                tabBarIcon: ({color, size }) => (
-                    <AntDesign name="book" color={color} size={size} />
-                ),
-            }}
-            />
+      <Tabs.Screen
+        name="workout"
+        options={{
+          title: "Workout",
+          tabBarIcon: ({ color, size }) => (
+            <AntDesign name="plus" color={color} size={size} />
+          ),
+        }}
+      />
 
-            <Tabs.Screen
-            name="workout"
-            options={{
-                title: "Workout",
-                headerShown: false,
-                tabBarIcon: ({color, size }) => (
-                    <AntDesign name="plus" size={size} color={color} />
-                ),
-            }}
-            />
+      {/* ✅ remove from tab bar entirely */}
+      <Tabs.Screen name="active-workout" options={{ href: null }} />
 
+      <Tabs.Screen
+        name="history"
+        options={{
+          title: "History",
+          tabBarIcon: ({ color, size }) => (
+            <AntDesign name="clockcircleo" color={color} size={size} />
+          ),
+        }}
+      />
 
-            <Tabs.Screen
-            name="active-workout"
-            options={{
-                title: "Active Workout",
-                headerShown: false,
-                tabBarStyle: {
-                    display: "none",
-                },
-            }}
-            />
-
-            <Tabs.Screen
-            name="history"
-            options={{
-                title: "History",
-                headerShown: false,
-                tabBarIcon: ({color, size }) => (
-                    <AntDesign name="clockcircleo" size={size} color={color} />
-                ),
-            }}
-            />
-
-            <Tabs.Screen
-            name="profile"
-            options={{
-                title: "Profile",
-                headerShown: false,
-                // tabBarIcon: ({color, size }) => (
-                //     <Image
-                //     source={user?.imageUrl ?? user?.externalAccounts[0]?.imageUrl}
-                //     className="rounded-full"
-                //     style={{ width: 28, height: 28, borderRadius: 100}} 
-                //     />
-                // ),
-            }}
-            />
-        </Tabs>
-    )
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color, size }) => (
+            <AntDesign name="user" color={color} size={size} />
+          ),
+        }}
+      />
+    </Tabs>
+  );
 }
-
-export default Layout;

@@ -1,7 +1,7 @@
 import { createClient } from "@sanity/client";
-import imageUrlBuilder from "@sanity/image-url";
+import { createImageUrlBuilder } from "@sanity/image-url";
 
-//client safe config
+// public client config
 export const config = {
   projectId: "cwx5k0kx",
   dataset: "production",
@@ -11,14 +11,14 @@ export const config = {
 
 export const client = createClient(config);
 
-//admin level client used for backend
-//admin client for mutations
+// admin client (mutations only)
 const adminConfig = {
   ...config,
-  token: process.env.SANITY_API_TOKEN,
+  token: process.env.EXPO_SANITY_API_TOKEN,
 };
+
 export const adminClient = createClient(adminConfig);
 
-//image URL builder
-const builder = imageUrlBuilder(config);
-export const urlFor = (source: string) => builder.image(source);
+// image url builder
+const builder = createImageUrlBuilder(config);
+export const urlFor = (source: any) => builder.image(source);
