@@ -32,7 +32,7 @@ const getDifficultyColor = (difficulty?: string) => {
 };
 
 // ✅ remove any trailing slash so we never get `//api/...`
-const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || "").replace(
+const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || process.env.EXPO_PUBLIC_BACKEND_URL_CODESPACE).replace(
   /\/$/,
   ""
 );

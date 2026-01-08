@@ -73,10 +73,10 @@ async function fetchExercisesFromRapidAPI(
   }
 }
 
-const BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+const BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL || process.env.EXPO_PUBLIC_BACKEND_URL_CODESPACE;
 
 if (!BACKEND_BASE_URL) {
-  throw new Error("Missing EXPO_PUBLIC_BACKEND_URL in .env");
+  throw new Error("Missing EXPO_PUBLIC_BACKEND_URL || || process.env.EXPO_PUBLIC_BACKEND_URL_CODESPACE in .env");
 }
 
 function getExerciseGifUrl(exerciseId: string) {

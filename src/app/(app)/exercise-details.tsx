@@ -15,7 +15,7 @@ import Markdown from "react-native-markdown-display";
 import { client } from "../../lib/sanity";
 import type { Exercise } from "../../lib/sanity/types.js";
 
-const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || "").replace(
+const BACKEND_URL = (process.env.EXPO_PUBLIC_BACKEND_URL || process.env.EXPO_PUBLIC_BACKEND_URL_CODESPACE).replace(
   /\/$/,
   ""
 );
