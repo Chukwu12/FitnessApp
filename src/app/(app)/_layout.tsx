@@ -19,6 +19,7 @@ function Layout() {
   return (
     <Stack>
       <Stack.Protected guard={isSignedIn}>
+        <Stack.Screen name="active-workout" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
           name="exercise-details"

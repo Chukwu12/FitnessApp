@@ -3,6 +3,7 @@ const OpenAI = require("openai");
 
 const router = express.Router();
 
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY, // server-only env var
 });

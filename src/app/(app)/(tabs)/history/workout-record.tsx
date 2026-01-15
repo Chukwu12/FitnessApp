@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ActivityIndicator, TouchableOpacity, ScrollView, Alert } from "react-native";
+import { View, Text, ActivityIndicator, TouchableOpacity, ScrollView, Platform, Alert } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { defineQuery } from "groq";
-import { client } from "@/lib/client";
+import { client } from "@/lib/sanity/client";
 import { useUser } from "@clerk/clerk-expo";
 import { formatDuration } from "lib/utils";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+
+
+
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+
 
 
 export const getWorkoutRecordQuery = defineQuery(`
@@ -130,45 +135,53 @@ export default function WorkoutRecord() {
     return { volume: totalVolume, unit };
   };
 
-  const handleDeleteWorkout = () => {
-    Alert.alert(
-      'Delete Workout',
-      'Are you sure you want to delete this workout? This action canno be undone',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: deleteWorkout,
-        },
-      ]
-    );
-  };
+ const handleDeleteWorkout = () => {
+  const message = "Are you sure you want to delete this workout? This can't be undone.";
 
-  const deleteWorkout = async () => {
-    if(!workoutId) return;
+  if (Platform.OS === "web") {
+    const ok = window.confirm(message);
+    if (ok) deleteWorkout();
+    return;
+  }
 
-    setDeleting(true);
+  Alert.alert("Delete Workout", message, [
+    { text: "Cancel", style: "cancel" },
+    { text: "Delete", style: "destructive", onPress: deleteWorkout },
+  ]);
+};
 
-    try{
-      await fetch('/api/delete-workout',) {
-        method: 'POST',
-        body: JSON.stringify({workoutId}),
-      });
 
-      router.replace('/(app)/(tabs)/history?refresh=true');
-      } catch (error) {
-        console.error("Error deleting workout", error);
-        Alert.alert("Error", "Faled to delete workout. Please try again.", [
-          {text: 'OK'},
-        ]);
-      } finally {
-        setDeleting(false);
-      }
-    };
+const deleteWorkout = async () => {
+  if (!workoutId) return;
+  if (!BACKEND_URL) {
+    Alert.alert("Config error", "Missing EXPO_PUBLIC_BACKEND_URL");
+    return;
+  }
+
+  setDeleting(true);
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/delete-workout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workoutId }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data?.error || `Delete failed (${res.status})`);
+    }
+
+    router.replace("/(app)/(tabs)/history?refresh=true");
+  } catch (err) {
+    console.error("Delete workout failed:", err);
+    Alert.alert("Error", "Failed to delete workout. Please try again.");
+  } finally {
+    setDeleting(false);
+  }
+};
+
+
 
 
   if (loading) {
@@ -216,7 +229,7 @@ export default function WorkoutRecord() {
             </Text>
 
             <TouchableOpacity
-               onPress={handleDeleteWorkout}
+                onPress={handleDeleteWorkout}
               disabled={deleting}
               className="bg-red-600 px-4 py-2 rounded-lg flex-row items-center">
 

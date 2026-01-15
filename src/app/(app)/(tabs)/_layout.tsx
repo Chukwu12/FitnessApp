@@ -40,8 +40,6 @@ export default function Layout() {
         }}
       />
 
-      {/* ✅ remove from tab bar entirely */}
-      <Tabs.Screen name="active-workout" options={{ href: null }} />
 
       <Tabs.Screen
         name="history"

@@ -4,15 +4,20 @@ const axios = require("axios");
 
 const router = express.Router();
 
+// ✅ handle preflight (helps web)
+router.options("/exercise/:exerciseId", (_req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  return res.sendStatus(204);
+});
+
 router.get("/exercise/:exerciseId", async (req, res) => {
   try {
     const { exerciseId } = req.params;
-
     const rapidKey = process.env.RAPID_API_KEY;
 
-    if (!rapidKey) {
-      return res.status(500).json({ error: "Missing RapidAPI key" });
-    }
+    if (!rapidKey) return res.status(500).json({ error: "Missing RapidAPI key" });
 
     const url = `https://exercisedb.p.rapidapi.com/image?exerciseId=${exerciseId}&resolution=180`;
 
@@ -28,13 +33,14 @@ router.get("/exercise/:exerciseId", async (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
 
-    res.setHeader(
-      "Content-Type",
-      response.headers["content-type"] || "image/gif"
-    );
+    // ✅ avoid sniffing issues
+    res.setHeader("X-Content-Type-Options", "nosniff");
+
+    res.setHeader("Content-Type", response.headers["content-type"] || "image/gif");
 
     return res.send(Buffer.from(response.data));
   } catch (e) {
+    console.error("GIF proxy error:", e?.message || e);
     return res.status(404).json({ error: "IMAGE NOT FOUND" });
   }
 });

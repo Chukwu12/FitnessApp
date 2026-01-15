@@ -6,7 +6,7 @@ const { createClient } = require("@sanity/client");
 const SANITY_PROJECT_ID = process.env.EXPO_PUBLIC_SANITY_PROJECT_ID;
 const SANITY_DATASET = process.env.EXPO_PUBLIC_SANITY_DATASET || "production";
 const SANITY_API_TOKEN = process.env.SANITY_API_TOKEN;
-const BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL || process.env.EXPO_PUBLIC_BACKEND_URL_CODESPACE ;
+const BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 if (!SANITY_PROJECT_ID)
   throw new Error("Missing EXPO_PUBLIC_SANITY_PROJECT_ID");

@@ -9,7 +9,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import { client } from "@/lib/client";
+import { client } from "@/lib/sanity/client";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { formatDuration } from "../../../../../lib/utils";
 import { useUser } from "@clerk/clerk-expo";
