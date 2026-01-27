@@ -1,12 +1,12 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export interface WorkoutSet {
   id: string;
   reps: string;
   weight: string;
-  weightUnit: 'kg' | 'lbs';
+  weightUnit: "kg" | "lbs";
   isCompleted: boolean;
 }
 
@@ -18,9 +18,9 @@ interface WorkoutExercise {
 }
 
 interface WorkoutStore {
-    //these are the state variable
+  //these are the state variable
   workoutExercises: WorkoutExercise[];
-  weightUnit: 'kg' | 'lbs';
+  weightUnit: "kg" | "lbs";
 
   //these are the action that can be performed on the state
   addExerciseToWorkout: (exercise: { name: string; sanityId: string }) => void;
@@ -29,7 +29,7 @@ interface WorkoutStore {
       | WorkoutExercise[]
       | ((prev: WorkoutExercise[]) => WorkoutExercise[])
   ) => void;
-  setWeightUnit: (unit: 'kg' | 'lbs') => void;
+  setWeightUnit: (unit: "kg" | "lbs") => void;
   resetWorkout: () => void;
 }
 
@@ -37,7 +37,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
   persist(
     (set) => ({
       workoutExercises: [],
-      weightUnit: 'lbs',
+      weightUnit: "lbs",
 
       addExerciseToWorkout: (exercise) =>
         set((state) => ({
@@ -47,7 +47,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
               id: Math.random().toString(),
               sanityId: exercise.sanityId,
               name: exercise.name,
-              sets: [], // start with empty sets 
+              sets: [], // start with empty sets
             },
           ],
         })),
@@ -55,7 +55,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
       setWorkoutExercises: (exercises) =>
         set((state) => ({
           workoutExercises:
-            typeof exercises === 'function'
+            typeof exercises === "function"
               ? exercises(state.workoutExercises)
               : exercises,
         })),
@@ -71,7 +71,7 @@ export const useWorkoutStore = create<WorkoutStore>()(
         }),
     }),
     {
-      name: 'workout-store',
+      name: "workout-store",
       storage: createJSONStorage(() => AsyncStorage),
       //select the partial state to persist
       partialize: (state) => ({

@@ -1,7 +1,6 @@
 // backend/server.js
 require("dotenv").config({ path: __dirname + "/.env" });
 
-
 const express = require("express");
 const cors = require("cors");
 
@@ -31,20 +30,24 @@ app.use((req, res, next) => {
   if (req.method === "OPTIONS") {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization"
+    );
     return res.sendStatus(204);
   }
   next();
 });
-
-
-
 
 app.use(express.json());
 
 // health check
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
+});
+
+app.get("/debug/env", (_req, res) => {
+  res.json({ hasRapidKey: !!process.env.RAPID_API_KEY });
 });
 
 // routes

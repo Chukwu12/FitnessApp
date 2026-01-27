@@ -17,7 +17,8 @@ router.get("/exercise/:exerciseId", async (req, res) => {
     const { exerciseId } = req.params;
     const rapidKey = process.env.RAPID_API_KEY;
 
-    if (!rapidKey) return res.status(500).json({ error: "Missing RapidAPI key" });
+    if (!rapidKey)
+      return res.status(500).json({ error: "Missing RapidAPI key" });
 
     const url = `https://exercisedb.p.rapidapi.com/image?exerciseId=${exerciseId}&resolution=180`;
 
@@ -27,21 +28,47 @@ router.get("/exercise/:exerciseId", async (req, res) => {
         "X-RapidAPI-Key": rapidKey,
         "X-RapidAPI-Host": "exercisedb.p.rapidapi.com",
       },
+      validateStatus: () => true,
     });
+
+    // If RapidAPI says 429/403/etc, pass it through cleanly
+    if (response.status !== 200) {
+      return res.status(response.status).json({
+        error: "Upstream error",
+        upstreamStatus: response.status,
+      });
+    }
 
     // ✅ allow embedding as an image on web
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    res.setHeader("X-Content-Type-Options", "nosniff");
 
     // ✅ avoid sniffing issues
     res.setHeader("X-Content-Type-Options", "nosniff");
 
-    res.setHeader("Content-Type", response.headers["content-type"] || "image/gif");
+    // Cache to reduce calls (helps a LOT)
+    res.setHeader("Cache-Control", "public, max-age=86400"); // 24h
+
+    res.setHeader(
+      "Content-Type",
+      response.headers["content-type"] || "image/gif"
+    );
 
     return res.send(Buffer.from(response.data));
   } catch (e) {
-    console.error("GIF proxy error:", e?.message || e);
-    return res.status(404).json({ error: "IMAGE NOT FOUND" });
+    const status = e?.response?.status || 500;
+    const data = e?.response?.data;
+
+    console.error("GIF proxy error status:", status);
+    console.error("GIF proxy error data:", data);
+    console.error("GIF proxy error message:", e?.message);
+
+    return res.status(status).json({
+      error: "GIF PROXY FAILED",
+      status,
+      data: typeof data === "string" ? data.slice(0, 300) : data,
+    });
   }
 });
 
