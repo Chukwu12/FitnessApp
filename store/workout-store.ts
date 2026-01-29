@@ -1,80 +1,112 @@
+import { Platform } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+
+// --------------------
+// Types
+// --------------------
+export type WeightUnit = "kg" | "lbs";
 
 export interface WorkoutSet {
   id: string;
   reps: string;
   weight: string;
-  weightUnit: "kg" | "lbs";
+  weightUnit: WeightUnit;
   isCompleted: boolean;
 }
 
-interface WorkoutExercise {
+export interface WorkoutExercise {
   id: string;
-  sanityId: string; // store sanity _id
+  sanityId: string;
   name: string;
   sets: WorkoutSet[];
 }
 
-interface WorkoutStore {
-  //these are the state variable
+export interface WorkoutStore {
   workoutExercises: WorkoutExercise[];
-  weightUnit: "kg" | "lbs";
+  weightUnit: WeightUnit;
 
-  //these are the action that can be performed on the state
   addExerciseToWorkout: (exercise: { name: string; sanityId: string }) => void;
+
   setWorkoutExercises: (
     exercises:
       | WorkoutExercise[]
       | ((prev: WorkoutExercise[]) => WorkoutExercise[])
   ) => void;
-  setWeightUnit: (unit: "kg" | "lbs") => void;
+
+  setWeightUnit: (unit: WeightUnit) => void;
   resetWorkout: () => void;
 }
 
+// --------------------
+// Storage (web vs native)
+// --------------------
+const webStorage = {
+  getItem: (name: string): Promise<string | null> =>
+    Promise.resolve(
+      typeof window !== "undefined" ? window.localStorage.getItem(name) : null
+    ),
+
+  setItem: (name: string, value: string): Promise<void> => {
+    if (typeof window !== "undefined") window.localStorage.setItem(name, value);
+    return Promise.resolve();
+  },
+
+  removeItem: (name: string): Promise<void> => {
+    if (typeof window !== "undefined") window.localStorage.removeItem(name);
+    return Promise.resolve();
+  },
+};
+
+const storage =
+  Platform.OS === "web"
+    ? createJSONStorage(() => webStorage)
+    : createJSONStorage(() => AsyncStorage);
+
+// --------------------
+// Store
+// --------------------
 export const useWorkoutStore = create<WorkoutStore>()(
   persist(
     (set) => ({
       workoutExercises: [],
       weightUnit: "lbs",
 
-      addExerciseToWorkout: (exercise) =>
-        set((state) => ({
+      addExerciseToWorkout: (exercise: { name: string; sanityId: string }) =>
+        set((state: WorkoutStore) => ({
           workoutExercises: [
             ...state.workoutExercises,
             {
               id: Math.random().toString(),
               sanityId: exercise.sanityId,
               name: exercise.name,
-              sets: [], // start with empty sets
+              sets: [],
             },
           ],
         })),
 
-      setWorkoutExercises: (exercises) =>
-        set((state) => ({
+      setWorkoutExercises: (
+        exercises:
+          | WorkoutExercise[]
+          | ((prev: WorkoutExercise[]) => WorkoutExercise[])
+      ) =>
+        set((state: WorkoutStore) => ({
           workoutExercises:
             typeof exercises === "function"
               ? exercises(state.workoutExercises)
               : exercises,
         })),
 
-      setWeightUnit: (unit) =>
-        set({
-          weightUnit: unit,
-        }),
+      setWeightUnit: (unit: WeightUnit) => set({ weightUnit: unit }),
 
-      resetWorkout: () =>
-        set({
-          workoutExercises: [],
-        }),
+      resetWorkout: () => set({ workoutExercises: [] }),
     }),
     {
       name: "workout-store",
-      storage: createJSONStorage(() => AsyncStorage),
-      //select the partial state to persist
-      partialize: (state) => ({
+      storage,
+      // only persist what you want
+      partialize: (state: WorkoutStore) => ({
         weightUnit: state.weightUnit,
       }),
     }

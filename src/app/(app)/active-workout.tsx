@@ -13,8 +13,8 @@ import { useStopwatch } from "react-timer-hook";
 import { useWorkoutStore } from "store/workout-store";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import exercise from "sanity/schemaTypes/exercise";
-import workout from "sanity/schemaTypes/workout";
+// import exercise from "sanity/schemaTypes/exercise";
+// import workout from "sanity/schemaTypes/workout";
 import ExerciseSelectionModal from "./components/ExerciseSelectionModal";
 
 export default function ActiveWorkout() {
@@ -87,17 +87,19 @@ export default function ActiveWorkout() {
             <View className="flex-row bg-gray-700 rounded-lg p-1">
               <TouchableOpacity
                 onPress={() => setWeightUnit("lbs")}
-                className={`px-3 py-1 rounded'} ${
+                className={`px-3 py-1 rounded ${
                   weightUnit === "lbs" ? "bg-blue-600" : ""
                 }`}
               >
                 <Text
-                  className={`text-sm font-medium $}
-                        weightUnit === 'lbs' ? 'text-white' : 'text-gray-300'}`}
+                  className={`text-sm font-medium ${
+                    weightUnit === "lbs" ? "text-white" : "text-gray-300"
+                  }`}
                 >
                   lbs
                 </Text>
               </TouchableOpacity>
+
               <TouchableOpacity
                 onPress={() => setWeightUnit("kg")}
                 className={`px-3 py-1 rounded
@@ -175,7 +177,6 @@ export default function ActiveWorkout() {
             </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>
-        ;
       </View>
       {/* Exercise Selection Modal */}
       <ExerciseSelectionModal

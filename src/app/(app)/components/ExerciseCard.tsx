@@ -1,7 +1,14 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Image } from "expo-image";
-import type { Exercise } from "../../../lib/sanity/types";
+// import type { Exercise } from "@/lib/sanity/types";
+
+type Exercise = {
+  _id: string;
+  name: string;
+  difficulty?: string;
+  exerciseId?: string;
+};
 
 interface ExerciseCardProps {
   item: Exercise;
