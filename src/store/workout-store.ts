@@ -51,13 +51,13 @@ const webStorage = {
     try {
       if (typeof window === "undefined") return;
       window.localStorage.setItem(name, value);
-    } catch {}
+    } catch { }
   },
   removeItem: (name: string) => {
     try {
       if (typeof window === "undefined") return;
       window.localStorage.removeItem(name);
-    } catch {}
+    } catch { }
   },
 };
 
@@ -72,71 +72,64 @@ const storage = createJSONStorage(() => {
 });
 
 export const useWorkoutStore = create<WorkoutStore>()(
-  persist(
-    (set, get) => ({
-      workoutExercises: [],
-      weightUnit: "lbs",
-      hasHydrated: false,
+    persist(
+      (set, get) => ({
+        workoutExercises: [],
+        weightUnit: "lbs",
+        hasHydrated: false,
 
-      setHasHydrated: (v) => set({ hasHydrated: v }),
+        setHasHydrated: (v) => set({ hasHydrated: v }),
 
-      addExerciseToWorkout: (exercise) => {
-        // ✅ prevent adds before hydration to avoid “rehydrate then overwrite” loops on web
-        if (!get().hasHydrated && Platform.OS === "web") return;
+        addExerciseToWorkout: (exercise) => {
+          if (!get().hasHydrated && Platform.OS === "web") return;
 
-        set((state) => ({
-          workoutExercises: [
-            ...state.workoutExercises,
-            {
-              id: crypto?.randomUUID?.() ?? Math.random().toString(),
-              sanityId: exercise.sanityId,
-              name: exercise.name,
-              sets: [],
-            },
-          ],
-        }));
-      },
+          set((state) => ({
+            workoutExercises: [
+              ...state.workoutExercises,
+              {
+                id: crypto?.randomUUID?.() ?? Math.random().toString(),
+                sanityId: exercise.sanityId,
+                name: exercise.name,
+                sets: [],
+              },
+            ],
+          }));
+        },
 
-      setWorkoutExercises: (exercises) => {
-        if (!get().hasHydrated && Platform.OS === "web") return;
+        setWorkoutExercises: (exercises) => {
+          if (!get().hasHydrated && Platform.OS === "web") return;
 
-        set((state) => ({
-          workoutExercises:
-            typeof exercises === "function"
-              ? exercises(state.workoutExercises)
-              : exercises,
-        }));
-      },
+          set((state) => ({
+            workoutExercises:
+              typeof exercises === "function"
+                ? exercises(state.workoutExercises)
+                : exercises,
+          }));
+        },
 
-      setWeightUnit: (unit) => {
-        if (!get().hasHydrated && Platform.OS === "web") return;
-        set({ weightUnit: unit });
-      },
+        setWeightUnit: (unit) => {
+          if (!get().hasHydrated && Platform.OS === "web") return;
+          set({ weightUnit: unit });
+        },
 
-      resetWorkout: () => {
-        if (!get().hasHydrated && Platform.OS === "web") return;
-        set({ workoutExercises: [] });
-      },
-    }),
-    {
-      name: "workout-store",
-      storage,
-
-      // ✅ this prevents noisy rerenders while hydrating
-      partialize: (state) => ({
-        weightUnit: state.weightUnit,
-        workoutExercises: state.workoutExercises,
+        resetWorkout: () => {
+          if (!get().hasHydrated && Platform.OS === "web") return;
+          set({ workoutExercises: [] });
+        },
       }),
+      {
+        name: "workout-store",
+        storage,
 
-      // ✅ hydration lifecycle: lets UI know when it's safe
-      onRehydrateStorage: () => (state, error) => {
-        if (error) {
-          // still mark hydrated to prevent “forever loading”
-          state?.setHasHydrated(true);
-          return;
-        }
-        state?.setHasHydrated(true);
-      },
-    }
-  )
+        partialize: (state) => ({
+          weightUnit: state.weightUnit,
+          workoutExercises: state.workoutExercises,
+        }),
+
+        onRehydrateStorage: () => (state, error) => {
+          state?.setHasHydrated(true); // mark hydrated either way
+        },
+      }
+    )
 );
+

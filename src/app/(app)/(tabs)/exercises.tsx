@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useState, useCallback, useDeferredValue, } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+  useDeferredValue,
+} from "react";
 import {
   Text,
   SafeAreaView,
@@ -15,25 +21,25 @@ import { client } from "../../../lib/sanity";
 import type { Exercise } from "../../../lib/sanity/types";
 import { defineQuery } from "groq";
 
-// -------------------
-// GROQ query outside component
-// -------------------
-export const exercisesQuery = defineQuery(`*[_type == "exercise"]{
-  _id,
-  exerciseId,
-  name,
-  bodyPart,
-  target,
-  equipment,
-  difficulty,
-  tags,
-  instructions,
-  gifUrl
-}`);
+// ✅ Updated GROQ query (matches schema + modal)
+export const exercisesQuery = defineQuery(`
+  *[_type == "exercise" && isActive != false] 
+  | order(name asc){
+    _id,
+    exerciseId,
+    name,
+    bodyPart,
+    target,
+    secondaryMuscles,
+    equipment,
+    category,
+    difficulty,
+    tags,
+    instructions,
+    gifUrl
+  }
+`);
 
-// -------------------
-// Component
-// -------------------
 export default function Exercises() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,6 +47,9 @@ export default function Exercises() {
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
 
+  // -------------------
+  // Fetch Exercises
+  // -------------------
   const fetchExercises = useCallback(async () => {
     try {
       const data = await client.fetch(exercisesQuery);
@@ -62,18 +71,37 @@ export default function Exercises() {
     setRefreshing(false);
   }, [fetchExercises]);
 
-  // ✅ reduces list churn while typing
+  // -------------------
+  // Search Optimization
+  // -------------------
   const deferredSearch = useDeferredValue(searchQuery);
 
   const filteredExercises = useMemo(() => {
     const q = deferredSearch.trim().toLowerCase();
     if (!q) return exercises;
-    return exercises.filter((ex) =>
-      (ex.name ?? "").toLowerCase().includes(q)
-    );
+
+    return exercises.filter((ex) => {
+      const haystack = [
+        ex.name,
+        ex.difficulty,
+        ex.bodyPart,
+        ex.target,
+        ex.equipment,
+        ex.category,
+        ...(ex.secondaryMuscles ?? []),
+        ...(ex.tags ?? []),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(q);
+    });
   }, [deferredSearch, exercises]);
 
-  // ✅ stable renderItem reference
+  // -------------------
+  // Stable renderItem
+  // -------------------
   const renderItem = useCallback(
     ({ item }: { item: Exercise }) => (
       <ExerciseCard
@@ -89,7 +117,9 @@ export default function Exercises() {
     [router]
   );
 
-
+  // -------------------
+  // Loading State
+  // -------------------
   if (loading) {
     return (
       <SafeAreaView className="flex-1 justify-center items-center bg-gray-50">
@@ -99,6 +129,9 @@ export default function Exercises() {
     );
   }
 
+  // -------------------
+  // Main UI
+  // -------------------
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header + Search */}
@@ -136,7 +169,11 @@ export default function Exercises() {
         keyExtractor={(item) => item._id}
         renderItem={renderItem}
         numColumns={2}
-        columnWrapperStyle={{ gap: 12, paddingHorizontal: 16, marginTop: 16 }}
+        columnWrapperStyle={{
+          gap: 12,
+          paddingHorizontal: 16,
+          marginTop: 16,
+        }}
         contentContainerStyle={{ paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -149,7 +186,6 @@ export default function Exercises() {
             titleColor="#6B7280"
           />
         }
-        // ✅ helps prevent mount/unmount churn 
         initialNumToRender={10}
         windowSize={7}
         maxToRenderPerBatch={10}

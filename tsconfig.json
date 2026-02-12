@@ -15,5 +15,5 @@
     "sanity/**/*.ts",
     "sanity/**/*.json",
     "nativewind-env.d.ts"
-  ]
+, "src/store"  ]
 }
