@@ -52,8 +52,8 @@ export default function ActiveWorkout() {
             router.back();
           },
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const addExercise = () => {
@@ -64,7 +64,10 @@ export default function ActiveWorkout() {
     <View className="flex-1">
       <StatusBar barStyle="light-content" backgroundColor="#1F2937" />
 
-      {/* Tap safe area  */}
+      <View
+        className="bg-gray-800"
+        style={{ paddingTop: Platform.OS === "ios" ? 55 : StatusBar.currentHeight || 0 }}
+      />
 
       <View
         className="bg-gray-800"

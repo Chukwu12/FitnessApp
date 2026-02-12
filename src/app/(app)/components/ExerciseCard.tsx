@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Image } from "expo-image";
 // import type { Exercise } from "@/lib/sanity/types";
@@ -38,19 +38,17 @@ const getDifficultyColor = (difficulty?: string) => {
   }
 };
 
-// ✅ remove any trailing slash so we never get `//api/...`
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
-export default function ExerciseCard({
-  item,
-  onPress,
-  showChevron = false,
-}: ExerciseCardProps) {
-  const gifUri =
-    item.exerciseId && BACKEND_URL
-      ? `${BACKEND_URL}/api/gifs/exercise/${item.exerciseId}`
-      : undefined;
+function ExerciseCardBase({ item, onPress, showChevron = false }: ExerciseCardProps) {
+  const gifUri = useMemo(() => {
+    if (!item.exerciseId || !BACKEND_URL) return undefined;
+    return `${BACKEND_URL}/api/gifs/exercise/${item.exerciseId}`;
+  }, [item.exerciseId]);
+
+   const imageSource = useMemo(() => (gifUri ? { uri: gifUri } : undefined), [gifUri]);
+
 
   return (
     <TouchableOpacity
@@ -58,16 +56,13 @@ export default function ExerciseCard({
       onPress={onPress}
       activeOpacity={0.8}
     >
-      {gifUri ? (
+      {imageSource ? (
         <Image
-          source={{ uri: gifUri }}
-          style={{
-            width: "100%",
-            height: 140,
-            borderRadius: 16,
-            marginBottom: 8,
-          }}
+          source={imageSource}
+          style={{ width: "100%", height: 140, borderRadius: 16, marginBottom: 8 }}
           contentFit="cover"
+          cachePolicy="disk"  
+          transition={0}     
         />
       ) : (
         <View className="h-[140px] w-full rounded-2xl bg-gray-200 mb-2 items-center justify-center">
@@ -97,3 +92,5 @@ export default function ExerciseCard({
     </TouchableOpacity>
   );
 }
+const ExerciseCard = React.memo(ExerciseCardBase);
+export default ExerciseCard;

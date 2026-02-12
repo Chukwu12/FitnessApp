@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback, useDeferredValue, } from "react";
 import {
   Text,
   SafeAreaView,
@@ -41,46 +41,54 @@ export default function Exercises() {
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
 
-  const fetchExercises = async () => {
+  const fetchExercises = useCallback(async () => {
     try {
       const data = await client.fetch(exercisesQuery);
-      setExercises(data);
+      setExercises(data ?? []);
     } catch (error) {
       console.error("Error fetching exercises:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchExercises();
-  }, []);
+  }, [fetchExercises]);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchExercises();
     setRefreshing(false);
-  };
+  }, [fetchExercises]);
 
-  // Filter exercises based on search (derived state)
+  // ✅ reduces list churn while typing
+  const deferredSearch = useDeferredValue(searchQuery);
+
   const filteredExercises = useMemo(() => {
-    if (!searchQuery) return exercises;
+    const q = deferredSearch.trim().toLowerCase();
+    if (!q) return exercises;
     return exercises.filter((ex) =>
-      (ex.name ?? "").toLowerCase().includes(searchQuery.toLowerCase())
+      (ex.name ?? "").toLowerCase().includes(q)
     );
-  }, [searchQuery, exercises]);
+  }, [deferredSearch, exercises]);
 
-  const renderItem = ({ item }: { item: Exercise }) => (
-    <ExerciseCard
-      item={item}
-      onPress={() =>
-        router.push({
-          pathname: "/exercise-details",
-          params: { id: item._id },
-        })
-      }
-    />
+  // ✅ stable renderItem reference
+  const renderItem = useCallback(
+    ({ item }: { item: Exercise }) => (
+      <ExerciseCard
+        item={item}
+        onPress={() =>
+          router.push({
+            pathname: "/exercise-details",
+            params: { id: item._id },
+          })
+        }
+      />
+    ),
+    [router]
   );
+
 
   if (loading) {
     return (
@@ -141,6 +149,12 @@ export default function Exercises() {
             titleColor="#6B7280"
           />
         }
+        // ✅ helps prevent mount/unmount churn 
+        initialNumToRender={10}
+        windowSize={7}
+        maxToRenderPerBatch={10}
+        updateCellsBatchingPeriod={50}
+        removeClippedSubviews={true}
         ListEmptyComponent={
           <View className="items-center p-8">
             <Ionicons name="fitness-outline" size={64} color="#9CA3AF" />
