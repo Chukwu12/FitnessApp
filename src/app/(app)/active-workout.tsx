@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -11,10 +11,10 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useStopwatch } from "react-timer-hook";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
-import { useWorkoutStore } from "../../store/workout-store";
+import { useWorkoutStore } from "@/store/workout-store";
 import ExerciseSelectionModal from "./components/ExerciseSelectionModal";
 
 export default function ActiveWorkout() {
@@ -28,7 +28,6 @@ export default function ActiveWorkout() {
   const hasHydrated = useWorkoutStore((s) => s.hasHydrated);
 
   const router = useRouter();
-
   const { seconds, minutes, reset } = useStopwatch({ autoStart: true });
 
   // ✅ optional but recommended for web
@@ -41,12 +40,10 @@ export default function ActiveWorkout() {
     );
   }
 
-<<<<<<< HEAD
-=======
-  const didResetRef = React.useRef(false);
-
+  // ✅ Reset stopwatch once when workout becomes empty
+  const didResetRef = useRef(false);
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       if (workoutExercises.length === 0 && !didResetRef.current) {
         didResetRef.current = true;
         reset();
@@ -55,11 +52,9 @@ export default function ActiveWorkout() {
       return () => {
         didResetRef.current = false;
       };
-    }, [workoutExercises.length])
+    }, [workoutExercises.length, reset])
   );
 
-
->>>>>>> 9327ec6 (Fix Metro import.meta crash (SDK 53), update metro config resolver, stabilize Expo Router auth redirects, refactor ExerciseSelectionModal to match Sanity schema, improve search + refresh logic, fix map() rendering bug in ActiveWorkout sets, and general UI cleanup)
   const getWorkoutDuration = () => {
     return `${minutes.toString().padStart(2, "0")}:${seconds
       .toString()
@@ -79,17 +74,16 @@ export default function ActiveWorkout() {
     ]);
   };
 
-  const addExercise = () => {
-    setShowExerciseSelection(true);
-  }
+  const addExercise = () => setShowExerciseSelection(true);
 
-  const deleteExercise = (id: string) => { };
+  // TODO: implement delete logic (store action)
+  const deleteExercise = (_id: string) => {};
 
   return (
     <View className="flex-1">
       <StatusBar barStyle="light-content" backgroundColor="#1F2937" />
 
-      {/* ✅ keep only ONE safe area spacer */}
+      {/* safe area spacer */}
       <View
         className="bg-gray-800"
         style={{
@@ -156,96 +150,93 @@ export default function ActiveWorkout() {
 
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
           <ScrollView className="flex-1 px-6 mt-4">
-            {workoutExercises.map((exercise) => (
-              <View key={exercise.id} className="mb-8">
-<<<<<<< HEAD
-                {/* Exercise Header */}
-              </View>
-            ))}
-=======
-                {/* Exercise header */}
-                <TouchableOpacity
-                  onPress={() =>
-                    router.push({
-                      pathname: '/exercise-details',
-                      params: {
-                        id: exercise.sanityId,
-                      },
-                    })
-                  }
-                  className="bg-blue-50 rounded-2xl p-4 mb-3">
-                  <View className="flex-row items-center justify-between">
-                    <View className="flex-1">
-                      <Text className="text-xl font-bold text-gray-900 mb-2">
-                        {exercise.name}
-                      </Text>
-                      <Text className="text-gray-600">
-                        {exercise.sets.length} sets • {''}
-                        {exercise.sets.filter((set) => set.isCompleted).length}
-                        {''}
-                        completed
-                      </Text>
-                    </View>
->>>>>>> 9327ec6 (Fix Metro import.meta crash (SDK 53), update metro config resolver, stabilize Expo Router auth redirects, refactor ExerciseSelectionModal to match Sanity schema, improve search + refresh logic, fix map() rendering bug in ActiveWorkout sets, and general UI cleanup)
+            {workoutExercises.map((exercise) => {
+              const completedCount = exercise.sets.filter((s) => s.isCompleted).length;
 
-                    {/* Delete Exercise Button */}
-                    <TouchableOpacity
-                      onPress={() => deleteExercise(exercise.id)}
-                      className="w-10 h-10 rounded-xl items-center justify-center bg-red-500 ml-3">
-                      <Ionicons name="trash" size={16} color='white' />
-                    </TouchableOpacity>
-                  </View>
-                </TouchableOpacity>
-
-                {/* Exercise Sets */}
-                <View className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-3">
-                  <Text className="text-lg font-semibold text-gray-900 mb-3">
-                    Sets
-                  </Text>
-                  {exercise.sets.length === 0 ? (
-                    <Text className="text-gray-500 text-center py-4">
-                      No sets yet. Add your first set below.
-                    </Text>
-                  ) : (
-                    exercise.sets.map((set, setIndex) => (
-                      <View
-                        key={set.id}
-                        className={`py-3 px-3 mb-2 rounded-lg border ${set.isCompleted
-                            ? "bg-green-100 border-green-300"
-                            : "bg-gray-50 border-gray-200"
-                          }`}
-                      >
-                        {/* First row: sets numbers, reps, weight, completed button, delete button */}
-                        <View className="flex-row items-center justify-between">
-                          <Text className="text-gray-700 font-medium w-8">
-                            {setIndex + 1}
-                          </Text>
-                        </View>
-                      </View>
-                    ))
-                  )}
-                  </View>
-                  
-
-
+              return (
+                <View key={exercise.id} className="mb-8">
+                  {/* Exercise header */}
                   <TouchableOpacity
-                    onPress={addExercise}
-                    className="bg-blue-600 rounded-2xl py-4 items-center mb-8 active:bg-blue-700"
-                    activeOpacity={0.8}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/exercise-details",
+                        params: { id: exercise.sanityId },
+                      })
+                    }
+                    className="bg-blue-50 rounded-2xl p-4 mb-3"
+                    activeOpacity={0.85}
                   >
-                    <View className="flex-row items-center">
-                      <Ionicons name="add" size={20} color="white" style={{ marginRight: 8 }} />
-                      <Text className="text-white font-semibold text-lg">Add Exercise</Text>
+                    <View className="flex-row items-center justify-between">
+                      <View className="flex-1">
+                        <Text className="text-xl font-bold text-gray-900 mb-2">
+                          {exercise.name}
+                        </Text>
+                        <Text className="text-gray-600">
+                          {exercise.sets.length} sets {" • "} {completedCount} completed
+                        </Text>
+                      </View>
+
+                      {/* Delete Exercise Button */}
+                      <TouchableOpacity
+                        onPress={() => deleteExercise(exercise.id)}
+                        className="w-10 h-10 rounded-xl items-center justify-center bg-red-500 ml-3"
+                      >
+                        <Ionicons name="trash" size={16} color="white" />
+                      </TouchableOpacity>
                     </View>
                   </TouchableOpacity>
-                </ScrollView>
-              </KeyboardAvoidingView>
+
+                  {/* Exercise Sets */}
+                  <View className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-3">
+                    <Text className="text-lg font-semibold text-gray-900 mb-3">Sets</Text>
+
+                    {exercise.sets.length === 0 ? (
+                      <Text className="text-gray-500 text-center py-4">
+                        No sets yet. Add your first set below.
+                      </Text>
+                    ) : (
+                      exercise.sets.map((set, setIndex) => (
+                        <View
+                          key={set.id}
+                          className={`py-3 px-3 mb-2 rounded-lg border ${
+                            set.isCompleted
+                              ? "bg-green-100 border-green-300"
+                              : "bg-gray-50 border-gray-200"
+                          }`}
+                        >
+                          <View className="flex-row items-center justify-between">
+                            <Text className="text-gray-700 font-medium w-8">
+                              {setIndex + 1}
+                            </Text>
+                            {/* add reps/weight/toggles here next */}
+                          </View>
+                        </View>
+                      ))
+                    )}
+                  </View>
+                </View>
+              );
+            })}
+
+            {/* Add exercise button */}
+            <TouchableOpacity
+              onPress={addExercise}
+              className="bg-blue-600 rounded-2xl py-4 items-center mb-8 active:bg-blue-700"
+              activeOpacity={0.8}
+            >
+              <View className="flex-row items-center">
+                <Ionicons name="add" size={20} color="white" style={{ marginRight: 8 }} />
+                <Text className="text-white font-semibold text-lg">Add Exercise</Text>
+              </View>
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </View>
 
-          <ExerciseSelectionModal
-            visible={showExerciseSelection}
-            onClose={() => setShowExerciseSelection(false)}
-          />
-      </View>
-      );
+      <ExerciseSelectionModal
+        visible={showExerciseSelection}
+        onClose={() => setShowExerciseSelection(false)}
+      />
+    </View>
+  );
 }
