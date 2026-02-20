@@ -26,16 +26,21 @@ interface WorkoutStore {
   // actions
   addExerciseToWorkout: (exercise: { name: string; sanityId: string }) => void;
   setWorkoutExercises: (
-    exercises:
-      | WorkoutExercise[]
-      | ((prev: WorkoutExercise[]) => WorkoutExercise[])
+    exercises: WorkoutExercise[] | ((prev: WorkoutExercise[]) => WorkoutExercise[])
   ) => void;
+  addNewSet: (exerciseId: string) => void;
+  removeExercise: (exerciseId: string) => void;
+
+
   setWeightUnit: (unit: "kg" | "lbs") => void;
   resetWorkout: () => void;
 
   // hydration action
   setHasHydrated: (v: boolean) => void;
 }
+
+
+
 
 // ✅ Web storage wrapper (no crash if window/localStorage isn't available)
 const webStorage = {
@@ -72,64 +77,95 @@ const storage = createJSONStorage(() => {
 });
 
 export const useWorkoutStore = create<WorkoutStore>()(
-    persist(
-      (set, get) => ({
-        workoutExercises: [],
-        weightUnit: "lbs",
-        hasHydrated: false,
+  persist(
+    (set, get) => ({
+      workoutExercises: [],
+      weightUnit: "lbs",
+      hasHydrated: false,
 
-        setHasHydrated: (v) => set({ hasHydrated: v }),
+      setHasHydrated: (v) => set({ hasHydrated: v }),
 
-        addExerciseToWorkout: (exercise) => {
-          if (!get().hasHydrated && Platform.OS === "web") return;
+      addExerciseToWorkout: (exercise) => {
+        if (!get().hasHydrated && Platform.OS === "web") return;
 
-          set((state) => ({
-            workoutExercises: [
-              ...state.workoutExercises,
-              {
-                id: crypto?.randomUUID?.() ?? Math.random().toString(),
-                sanityId: exercise.sanityId,
-                name: exercise.name,
-                sets: [],
-              },
-            ],
-          }));
-        },
+        set((state) => ({
+          workoutExercises: [
+            ...state.workoutExercises,
+            {
+              id: crypto?.randomUUID?.() ?? Math.random().toString(),
+              sanityId: exercise.sanityId,
+              name: exercise.name,
+              sets: [],
+            },
+          ],
+        }));
+      },
 
-        setWorkoutExercises: (exercises) => {
-          if (!get().hasHydrated && Platform.OS === "web") return;
+      setWorkoutExercises: (exercises) => {
+        if (!get().hasHydrated && Platform.OS === "web") return;
 
-          set((state) => ({
-            workoutExercises:
-              typeof exercises === "function"
-                ? exercises(state.workoutExercises)
-                : exercises,
-          }));
-        },
+        set((state) => ({
+          workoutExercises:
+            typeof exercises === "function"
+              ? exercises(state.workoutExercises)
+              : exercises,
+        }));
+      },
 
-        setWeightUnit: (unit) => {
-          if (!get().hasHydrated && Platform.OS === "web") return;
-          set({ weightUnit: unit });
-        },
+      // ✅ NEW: addNewSet action (used by ActiveWorkout)
+      addNewSet: (exerciseId) => {
+        if (!get().hasHydrated && Platform.OS === "web") return;
 
-        resetWorkout: () => {
-          if (!get().hasHydrated && Platform.OS === "web") return;
-          set({ workoutExercises: [] });
-        },
+        const unit = get().weightUnit;
+
+        const newSet: WorkoutSet = {
+          id: crypto?.randomUUID?.() ?? Math.random().toString(),
+          reps: "",
+          weight: "",
+          weightUnit: unit,
+          isCompleted: false,
+        };
+
+        set((state) => ({
+          workoutExercises: state.workoutExercises.map((ex) =>
+            ex.id === exerciseId ? { ...ex, sets: [...ex.sets, newSet] } : ex
+          ),
+        }));
+      },
+
+      removeExercise: (exerciseId) => {
+        if (!get().hasHydrated && Platform.OS === "web") return;
+
+        set((state) => ({
+          workoutExercises: state.workoutExercises.filter((ex) => ex.id !== exerciseId),
+        }));
+      },
+
+
+      setWeightUnit: (unit) => {
+        if (!get().hasHydrated && Platform.OS === "web") return;
+        set({ weightUnit: unit });
+      },
+
+      resetWorkout: () => {
+        if (!get().hasHydrated && Platform.OS === "web") return;
+        set({ workoutExercises: [] });
+      },
+    }),
+    {
+      name: "workout-store",
+      storage,
+
+      partialize: (state) => ({
+        weightUnit: state.weightUnit,
+        workoutExercises: state.workoutExercises,
       }),
-      {
-        name: "workout-store",
-        storage,
 
-        partialize: (state) => ({
-          weightUnit: state.weightUnit,
-          workoutExercises: state.workoutExercises,
-        }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
+    }
 
-        onRehydrateStorage: () => (state, error) => {
-          state?.setHasHydrated(true); // mark hydrated either way
-        },
-      }
-    )
+  )
 );
 
