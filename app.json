@@ -3,23 +3,9 @@
     "scheme": "acme",
     "userInterfaceStyle": "automatic",
     "orientation": "default",
-    "web": {
-      "output": "static"
-    },
-    "plugins": [
-      [
-        "expo-router",
-        {
-          "origin": "https://n"
-        }
-      ]
-    ],
+   "web": { "bundler": "metro", "output": "static" },
+   "plugins": ["expo-router"],
     "name": "fit-app",
-    "slug": "fit-app",
-    "extra": {
-      "SANITY_PROJECT_ID": "cwx5k0kx",
-      "SANITY_DATASET": "production",
-      "SANITY_API_TOKEN": "skDNaGrRuw0dvC4fsK650whx9EHDTqnekCuARY1azf41TpL46tckwBxYdBlb0ySfLRKnIlvTeIyrgKHGe6OmmNfkhhluG7I3z0FfSzbi6NzICSdZD3fEWU71wsAZK39JTW6IxTqk2Ycw3jwtntSBxn1qyHnCx6HqW5uGMmu61mSZO5z6kiIx"
-    }
+    "slug": "fit-app"
   }
 }

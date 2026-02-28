@@ -135,11 +135,12 @@ export const useWorkoutStore = create<WorkoutStore>()(
 
       removeExercise: (exerciseId) => {
         if (!get().hasHydrated && Platform.OS === "web") return;
-
+          console.log("hydrated?", hasHydrated);
         set((state) => ({
           workoutExercises: state.workoutExercises.filter((ex) => ex.id !== exerciseId),
         }));
       },
+      
 
 
       setWeightUnit: (unit) => {
