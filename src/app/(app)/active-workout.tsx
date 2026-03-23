@@ -14,12 +14,12 @@ import {
 import { useStopwatch } from "react-timer-hook";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useAuth, useUser } from "@clerk/clerk-expo";
+import { useAuth } from "@clerk/clerk-expo";
+
 import { useWorkoutStore } from "@/store/workout-store";
 import ExerciseSelectionModal from "./components/ExerciseSelectionModal";
 
 export default function ActiveWorkout() {
-  const { userId } = useAuth();
   const [showExerciseSelection, setShowExerciseSelection] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -31,8 +31,17 @@ export default function ActiveWorkout() {
   const hasHydrated = useWorkoutStore((s) => s.hasHydrated);
   const removeExercise = useWorkoutStore((s) => s.removeExercise);
 
- 
+  // ✅ actions
+  const addNewSet = useWorkoutStore((s) => s.addNewSet);
+  const setWorkoutExercises = useWorkoutStore((s) => s.setWorkoutExercises);
 
+  const { userId } = useAuth();
+  const router = useRouter();
+
+  // Use the stopwatch for timing with offset based on workout start time
+  const { seconds, minutes, totalSeconds, reset } = useStopwatch({
+    autoStart: true,
+  });
 
   const hasExercises = workoutExercises.length > 0;
   const everyExerciseHasASet = workoutExercises.every((ex) => ex.sets.length > 0);
@@ -42,99 +51,6 @@ export default function ActiveWorkout() {
 
   const canCompleteWorkout =
     !isSaving && hasExercises && everyExerciseHasASet && allSetsCompleted;
-
-
-  // ✅ new: actions
-  const addNewSet = useWorkoutStore((s) => s.addNewSet);
-  const setWorkoutExercises = useWorkoutStore((s) => s.setWorkoutExercises);
-
-  
-
-  const deleteExercise = (exerciseId: string) => {
-    console.log("deleteExercise called with", exerciseId);
-
-    if (Platform.OS === "web") {
-      const shouldDelete = window.confirm("Remove this exercise?");
-      if (shouldDelete) {
-        console.log("web confirm true, calling removeExercise");
-        removeExercise(exerciseId);
-      } else {
-        console.log("web confirm false, cancelling");
-      }
-      return;
-    }
-
-    Alert.alert("Remove Exercise", "Remove this exercise?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Remove",
-        style: "destructive",
-        onPress: () => {
-          console.log("Remove pressed, calling removeExercise");
-          removeExercise(exerciseId);
-        },
-      },
-    ]);
-  };
-
-  const updateSet = (
-    exerciseId: string,
-    setId: string,
-    field: "reps" | "weight",
-    value: string
-  ) => {
-    setWorkoutExercises((exercises) =>
-      exercises.map((exercise) =>
-        exercise.id === exerciseId
-          ? {
-            ...exercise,
-            sets: exercise.sets.map((set) =>
-              set.id === setId ? { ...set, [field]: value } : set
-            ),
-          }
-          : exercise
-      )
-    );
-  };
-
-
-  const deleteSet = (exerciseId: string, setId: string) => {
-    setWorkoutExercises((exercises) =>
-      exercises.map((exercise) =>
-        exercise.id === exerciseId
-          ? {
-            ...exercise,
-            sets: exercise.sets.filter((set) => set.id !== setId),
-          }
-          : exercise
-      )
-    );
-  };
-
-  const toggleSetCompletion = (exerciseId: string, setId: string) => {
-    setWorkoutExercises((exercises) =>
-      exercises.map((exercise) =>
-        exercise.id === exerciseId
-          ? {
-            ...exercise,
-            sets: exercise.sets.map((set) =>
-              set.id === setId
-                ? { ...set, isCompleted: !set.isCompleted }
-                : set
-            ),
-          }
-          : exercise
-      )
-    );
-  };
-
-
-
-
-
-  //Use the stopwatch for timing with offset based on workout start time
-  const router = useRouter();
-  const { seconds, minutes, hours, totalSeconds, reset } = useStopwatch({ autoStart: true });
 
   // ✅ optional but recommended for web
   if (Platform.OS === "web" && !hasHydrated) {
@@ -167,132 +83,184 @@ export default function ActiveWorkout() {
       .padStart(2, "0")}`;
   };
 
-  const saveWorkout = () => {
-    if (Platform.OS === "web") {
-      const confirmed = window.confirm(
-        "Are you sure you want to complete the workout? You won't be able to edit it afterwards."
-      );
-      if (confirmed) endWorkout();
-      return;
-    }
+  const deleteExercise = (exerciseId: string) => {
+    Alert.alert("Remove Exercise", "Remove this exercise?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: () => removeExercise(exerciseId),
+      },
+    ]);
+  };
 
-    Alert.alert(
-      "Complete Workout",
-      "Are you sure you want to complete the workout? You won't be able to edit it afterwards.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Complete", onPress: async () => await endWorkout() },
-      ]
+  const updateSet = (
+    exerciseId: string,
+    setId: string,
+    field: "reps" | "weight",
+    value: string
+  ) => {
+    setWorkoutExercises((exercises) =>
+      exercises.map((exercise) =>
+        exercise.id === exerciseId
+          ? {
+              ...exercise,
+              sets: exercise.sets.map((set) =>
+                set.id === setId ? { ...set, [field]: value } : set
+              ),
+            }
+          : exercise
+      )
     );
-  }
+  };
+
+  const deleteSet = (exerciseId: string, setId: string) => {
+    setWorkoutExercises((exercises) =>
+      exercises.map((exercise) =>
+        exercise.id === exerciseId
+          ? {
+              ...exercise,
+              sets: exercise.sets.filter((set) => set.id !== setId),
+            }
+          : exercise
+      )
+    );
+  };
+
+  const toggleSetCompletion = (exerciseId: string, setId: string) => {
+    setWorkoutExercises((exercises) =>
+      exercises.map((exercise) =>
+        exercise.id === exerciseId
+          ? {
+              ...exercise,
+              sets: exercise.sets.map((set) =>
+                set.id === setId
+                  ? { ...set, isCompleted: !set.isCompleted }
+                  : set
+              ),
+            }
+          : exercise
+      )
+    );
+  };
 
   const endWorkout = async () => {
     const saved = await saveWorkoutToDatabase();
 
     if (saved) {
       Alert.alert("Workout Saved", "Your workout has been saved successfully.");
-      //Reset workout and navigate back
+      // Reset workout and navigate back
       resetWorkout();
-      router.replace('/(app)(tabs)/history?refresh=true');
+      router.replace("/(app)(tabs)/history?refresh=true");
     }
   };
 
-const saveWorkoutToDatabase = async (): Promise<boolean> => {
-  if (isSaving) return false;
-  setIsSaving(true);
+  const saveWorkoutToDatabase = async (): Promise<boolean> => {
+    // Check if already saving to prevent double submissions
+    if (isSaving) return false;
+    setIsSaving(true);
 
-  try {
-    const durationInSeconds = totalSeconds;
+    try {
+      if (!userId) {
+        Alert.alert("Not signed in", "Please sign in to save workouts.");
+        return false;
+      }
 
-    // 1) Build exercises payload (only completed sets)
-    const exercisesForSanity = workoutExercises
-      .map((ex) => {
-        const completedSets = ex.sets
-          .filter((s) => s.isCompleted)
-          .map((s) => ({
-            reps: Number(s.reps) || 0,
-            weight: Number(s.weight) || 0,
-            weightUnit: s.weightUnit, // 'lbs' | 'kg'
-          }));
+      // Use stopwatch total seconds for workout duration
+      const durationInSeconds = totalSeconds;
 
-        return {
-          exercise: {
-            _type: "reference",
-            _ref: ex.sanityId,
-          },
-          sets: completedSets,
-        };
-      })
-      // 2) IMPORTANT: remove exercises that have 0 completed sets (schema requires min(1))
-      .filter((ex) => ex.sets.length > 0);
+      // Transform exercises data to match Sanity schema
+      // - Only completed sets
+      // - Convert reps/weight to numbers
+      // - Reference exercise by sanityId
+      const exercisesForSanity = workoutExercises
+        .map((ex) => {
+          const completedSets = ex.sets
+            .filter((s) => s.isCompleted)
+            .map((s) => ({
+              reps: Number(s.reps) || 0,
+              weight: Number(s.weight) || 0,
+              weightUnit: s.weightUnit, // 'lbs' | 'kg'
+            }));
 
-    // Optional guard: require at least 1 completed set in the workout
-    if (exercisesForSanity.length === 0) {
-      Alert.alert("Incomplete", "Complete at least one set before saving.");
-      return false;
-    }
+          return {
+            exercise: { _type: "reference", _ref: ex.sanityId },
+            sets: completedSets,
+          };
+        })
+        // IMPORTANT: schema requires min(1) set per exercise
+        .filter((ex) => ex.sets.length > 0);
 
-    const workoutData = {
-      userId,
-      date: new Date().toISOString(),
-      duration: durationInSeconds,
-      exercises: exercisesForSanity,
-    };
+      // Guard: require at least 1 completed set in the whole workout
+      if (exercisesForSanity.length === 0) {
+        Alert.alert("Incomplete", "Complete at least one set before saving.");
+        return false;
+      }
 
-    // Keep backend payload clean, but support direct Sanity writes if endpoint changes.
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL ?? "";
-    const isDirectSanityEndpoint = apiUrl.includes("api.sanity.io");
-    const requestPayload = isDirectSanityEndpoint
-      ? { _type: "workout", ...workoutData }
-      : workoutData;
+      // Send to backend (recommended)
+      const API_URL = process.env.EXPO_PUBLIC_API_URL;
+      if (!API_URL) {
+        Alert.alert("Missing config", "EXPO_PUBLIC_API_URL is not set.");
+        return false;
+      }
 
-    // 3) Send to backend (recommended)
-    const res = await fetch(
-      `${process.env.EXPO_PUBLIC_API_URL}/api/workouts`,
-      {
+      const res = await fetch(`${API_URL}/api/workouts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestPayload),
+        body: JSON.stringify({
+          userId,
+          date: new Date().toISOString(),
+          duration: durationInSeconds,
+          exercises: exercisesForSanity,
+        }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Save workout failed:", text);
+        Alert.alert("Error", "Failed to save workout. Try again.");
+        return false;
       }
-    );
 
-    if (!res.ok) {
-      const text = await res.text();
-      console.error("Save workout failed:", text);
-      Alert.alert("Error", "Failed to save workout. Try again.");
+      return true;
+    } catch (error) {
+      console.error("Error saving workout:", error);
+      Alert.alert(
+        "Error",
+        "There was an error saving your workout. Please try again."
+      );
       return false;
+    } finally {
+      setIsSaving(false);
     }
+  };
 
-    return true;
-  } catch (err) {
-    console.error("Error saving workout:", err);
-    Alert.alert("Error", "There was an error saving your workout. Please try again.");
-    return false;
-  } finally {
-    setIsSaving(false);
-  }
-};
-
-
-  const cancelWorkout = () => {
+  const saveWorkout = () => {
+    // Are you sure you want to complete the workout? show alert
     Alert.alert(
-      "Cancel Workout",
-      "Are you sure you want to cancel the workout?",
+      "Complete Workout",
+      "Are you sure you want to complete the workout? You won't be able to edit it afterwards.",
       [
-        { text: "No", style: "cancel" },
-        {
-          text: "End Workout",
-          onPress: () => {
-            resetWorkout();
-            router.back();
-          },
-        },
+        { text: "Cancel", style: "cancel" },
+        { text: "Complete", onPress: endWorkout },
       ]
     );
   };
 
-  const addExercise = () => setShowExerciseSelection(true);
+  const cancelWorkout = () => {
+    Alert.alert("Cancel Workout", "Are you sure you want to cancel the workout?", [
+      { text: "No", style: "cancel" },
+      {
+        text: "End Workout",
+        onPress: () => {
+          resetWorkout();
+          router.back();
+        },
+      },
+    ]);
+  };
 
+  const addExercise = () => setShowExerciseSelection(true);
 
   return (
     <View className="flex-1">
@@ -310,9 +278,7 @@ const saveWorkoutToDatabase = async (): Promise<boolean> => {
       <View className="bg-gray-800 px-6 py-4">
         <View className="flex-row items-center justify-between">
           <View>
-            <Text className="text-white text-xl font-semibold">
-              Active Workout
-            </Text>
+            <Text className="text-white text-xl font-semibold">Active Workout</Text>
             <Text className="text-gray-300">{getWorkoutDuration()}</Text>
           </View>
 
@@ -321,12 +287,14 @@ const saveWorkoutToDatabase = async (): Promise<boolean> => {
             <View className="flex-row bg-gray-700 rounded-lg p-1">
               <TouchableOpacity
                 onPress={() => setWeightUnit("lbs")}
-                className={`px-3 py-1 rounded ${weightUnit === "lbs" ? "bg-blue-600" : ""
-                  }`}
+                className={`px-3 py-1 rounded ${
+                  weightUnit === "lbs" ? "bg-blue-600" : ""
+                }`}
               >
                 <Text
-                  className={`text-sm font-medium ${weightUnit === "lbs" ? "text-white" : "text-gray-300"
-                    }`}
+                  className={`text-sm font-medium ${
+                    weightUnit === "lbs" ? "text-white" : "text-gray-300"
+                  }`}
                 >
                   lbs
                 </Text>
@@ -334,12 +302,14 @@ const saveWorkoutToDatabase = async (): Promise<boolean> => {
 
               <TouchableOpacity
                 onPress={() => setWeightUnit("kg")}
-                className={`px-3 py-1 rounded ${weightUnit === "kg" ? "bg-blue-600" : ""
-                  }`}
+                className={`px-3 py-1 rounded ${
+                  weightUnit === "kg" ? "bg-blue-600" : ""
+                }`}
               >
                 <Text
-                  className={`text-sm font-medium ${weightUnit === "kg" ? "text-white" : "text-gray-300"
-                    }`}
+                  className={`text-sm font-medium ${
+                    weightUnit === "kg" ? "text-white" : "text-gray-300"
+                  }`}
                 >
                   kg
                 </Text>
@@ -384,42 +354,47 @@ const saveWorkoutToDatabase = async (): Promise<boolean> => {
         >
           <ScrollView className="flex-1 px-6 mt-4">
             {workoutExercises.map((exercise) => {
-              const completedCount = exercise.sets.filter(
-                (s) => s.isCompleted
-              ).length;
+              const completedCount = exercise.sets.filter((s) => s.isCompleted)
+                .length;
 
               return (
                 <View key={exercise.id} className="mb-8">
                   {/* Exercise header */}
-                  <View className="flex-row items-center justify-between mb-3">
-                    <TouchableOpacity
-                      onPress={() =>
-                        router.push({
-                          pathname: "/exercise-details",
-                          params: { id: exercise.sanityId },
-                        })
-                      }
-                      className="bg-blue-50 rounded-2xl p-4 flex-1 mr-3"
-                      activeOpacity={0.85}
-                    >
-                      <View className="flex-1">
+                  {/* ✅ IMPORTANT CHANGE:
+                      - The header "card" is pressable to navigate
+                      - The delete button is a separate pressable OUTSIDE the navigation pressable
+                      - This avoids nested touchables (which breaks presses on web + mobile)
+                   */}
+                  <View className="bg-blue-50 rounded-2xl p-4 mb-3">
+                    <View className="flex-row items-center justify-between">
+                      {/* Left side navigates */}
+                      <TouchableOpacity
+                        onPress={() =>
+                          router.push({
+                            pathname: "/exercise-details",
+                            params: { id: exercise.sanityId },
+                          })
+                        }
+                        className="flex-1"
+                        activeOpacity={0.85}
+                      >
                         <Text className="text-xl font-bold text-gray-900 mb-2">
                           {exercise.name}
                         </Text>
                         <Text className="text-gray-600">
-                          {exercise.sets.length} sets {" • "} {completedCount}{" "}
-                          completed
+                          {exercise.sets.length} sets {" • "} {completedCount} completed
                         </Text>
-                      </View>
-                    </TouchableOpacity>
+                      </TouchableOpacity>
 
-                    {/* Delete Exercise Button */}
-                    <TouchableOpacity
-                      onPress={() => deleteExercise(exercise.id)}
-                      className="w-10 h-10 rounded-xl items-center justify-center bg-red-500"
-                    >
-                      <Ionicons name="trash" size={16} color="white" />
-                    </TouchableOpacity>
+                      {/* Delete Exercise Button (separate pressable) */}
+                      <TouchableOpacity
+                        onPress={() => deleteExercise(exercise.id)}
+                        className="w-10 h-10 rounded-xl items-center justify-center bg-red-500 ml-3"
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons name="trash" size={16} color="white" />
+                      </TouchableOpacity>
+                    </View>
                   </View>
 
                   {/* Exercise Sets */}
@@ -436,10 +411,11 @@ const saveWorkoutToDatabase = async (): Promise<boolean> => {
                       exercise.sets.map((set, setIndex) => (
                         <View
                           key={set.id}
-                          className={`py-3 px-3 mb-2 rounded-lg border ${set.isCompleted
-                            ? "bg-green-100 border-green-300"
-                            : "bg-gray-50 border-gray-200"
-                            }`}
+                          className={`py-3 px-3 mb-2 rounded-lg border ${
+                            set.isCompleted
+                              ? "bg-green-100 border-green-300"
+                              : "bg-gray-50 border-gray-200"
+                          }`}
                         >
                           <View className="flex-row items-center justify-between">
                             <Text className="text-gray-700 font-medium w-8">
@@ -458,10 +434,11 @@ const saveWorkoutToDatabase = async (): Promise<boolean> => {
                                 }
                                 placeholder="0"
                                 keyboardType="numeric"
-                                className={`border rounded-lg px-3 py-2 text-center ${set.isCompleted
-                                  ? "bg-gray-100 border-gray-300 text-gray-500"
-                                  : "bg-white border-gray-300"
-                                  }`}
+                                className={`border rounded-lg px-3 py-2 text-center ${
+                                  set.isCompleted
+                                    ? "bg-gray-100 border-gray-300 text-gray-500"
+                                    : "bg-white border-gray-300"
+                                }`}
                                 editable={!set.isCompleted}
                               />
                             </View>
@@ -474,19 +451,15 @@ const saveWorkoutToDatabase = async (): Promise<boolean> => {
                               <TextInput
                                 value={set.weight}
                                 onChangeText={(value) =>
-                                  updateSet(
-                                    exercise.id,
-                                    set.id,
-                                    "weight",
-                                    value
-                                  )
+                                  updateSet(exercise.id, set.id, "weight", value)
                                 }
                                 placeholder="0"
                                 keyboardType="numeric"
-                                className={`border rounded-lg px-3 py-2 text-center ${set.isCompleted
-                                  ? "bg-gray-100 border-gray-300 text-gray-500"
-                                  : "bg-white border-gray-300"
-                                  }`}
+                                className={`border rounded-lg px-3 py-2 text-center ${
+                                  set.isCompleted
+                                    ? "bg-gray-100 border-gray-300 text-gray-500"
+                                    : "bg-white border-gray-300"
+                                }`}
                                 editable={!set.isCompleted}
                               />
                             </View>
@@ -495,27 +468,34 @@ const saveWorkoutToDatabase = async (): Promise<boolean> => {
                               {set.weightUnit}
                             </Text>
 
-                            {/* Complete Set Button */}
+                            {/* Complete Button */}
                             <TouchableOpacity
-                              onPress={() => toggleSetCompletion(exercise.id, set.id)}
-                              className={`w-12 h-12 rounded-xl items-center justify-center mx-1 ${set.isCompleted ? "bg-green-500" : "bg-gray-200"
-                                }`}
+                              onPress={() =>
+                                toggleSetCompletion(exercise.id, set.id)
+                              }
+                              className={`w-12 h-12 rounded-xl items-center justify-center mx-1 ${
+                                set.isCompleted ? "bg-green-500" : "bg-gray-200"
+                              }`}
                               activeOpacity={0.8}
                             >
                               <Ionicons
-                                name={set.isCompleted ? "checkmark" : "checkmark-outline"}
+                                name={
+                                  set.isCompleted
+                                    ? "checkmark"
+                                    : "checkmark-outline"
+                                }
                                 size={20}
                                 color={set.isCompleted ? "white" : "#9CA3AF"}
                               />
                             </TouchableOpacity>
 
-
-                    
                             {/* Delete Set Button */}
                             <TouchableOpacity
                               onPress={() => deleteSet(exercise.id, set.id)}
-                              className="w-12 h-12 rounded-xl items-center justify-center bg-red-500 ml-1" >
-                              <Ionicons name="trash" size={16} color='white' />
+                              className="w-12 h-12 rounded-xl items-center justify-center bg-red-500 ml-1"
+                              activeOpacity={0.8}
+                            >
+                              <Ionicons name="trash" size={16} color="white" />
                             </TouchableOpacity>
                           </View>
                         </View>
@@ -535,9 +515,7 @@ const saveWorkoutToDatabase = async (): Promise<boolean> => {
                           color="#3B82F6"
                           style={{ marginRight: 6 }}
                         />
-                        <Text className="text-blue-600 font-medium">
-                          Add Set
-                        </Text>
+                        <Text className="text-blue-600 font-medium">Add Set</Text>
                       </View>
                     </TouchableOpacity>
                   </View>
@@ -552,43 +530,43 @@ const saveWorkoutToDatabase = async (): Promise<boolean> => {
               activeOpacity={0.8}
             >
               <View className="flex-row items-center">
-                <Ionicons
-                  name="add"
-                  size={20}
-                  color="white"
-                  style={{ marginRight: 8 }}
-                />
-                <Text className="text-white font-semibold text-lg">
-                  Add Exercise
-                </Text>
+                <Ionicons name="add" size={20} color="white" style={{ marginRight: 8 }} />
+                <Text className="text-white font-semibold text-lg">Add Exercise</Text>
               </View>
             </TouchableOpacity>
 
             {/* Complete Workout Button */}
             <TouchableOpacity
               onPress={saveWorkout}
-              className={`rounded-2xl py-4 items-center mb-8 ${canCompleteWorkout ? "bg-green-600 active:bg-green-700" : "bg-gray-400"
-                }`}
+              className={`rounded-2xl py-4 items-center mb-8 ${
+                canCompleteWorkout
+                  ? "bg-green-600 active:bg-green-700"
+                  : "bg-gray-400"
+              }`}
               disabled={!canCompleteWorkout}
+              activeOpacity={0.9}
             >
               {isSaving ? (
                 <View className="flex-row items-center">
                   <ActivityIndicator size="small" color="white" />
-                  <Text className="text-white font-semibold text-lg ml-2">Saving...</Text>
+                  <Text className="text-white font-semibold text-lg ml-2">
+                    Saving...
+                  </Text>
                 </View>
               ) : (
-                <Text className="text-white font-semibold text-lg">Complete Workout</Text>
+                <Text className="text-white font-semibold text-lg">
+                  Complete Workout
+                </Text>
               )}
             </TouchableOpacity>
-
           </ScrollView>
         </KeyboardAvoidingView>
-      </View >
+      </View>
 
       <ExerciseSelectionModal
         visible={showExerciseSelection}
         onClose={() => setShowExerciseSelection(false)}
       />
-    </View >
+    </View>
   );
 }
