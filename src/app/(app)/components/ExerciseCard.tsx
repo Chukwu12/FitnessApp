@@ -8,6 +8,7 @@ type Exercise = {
   name: string;
   difficulty?: string;
   exerciseId?: string;
+  gifUrl?: string;
 };
 
 interface ExerciseCardProps {
@@ -53,7 +54,7 @@ function ExerciseCardBase({
   showDelete = false,
 }: ExerciseCardProps) {
   const gifUri = useMemo(() => {
-    if (!item.exerciseId || !BACKEND_URL) return undefined;
+      if (!item.exerciseId || !BACKEND_URL) return undefined;
     return `${BACKEND_URL}/api/gifs/exercise/${item.exerciseId}`;
   }, [item.exerciseId]);
 
@@ -62,7 +63,7 @@ function ExerciseCardBase({
 
   
    return (
-    <View className="bg-white rounded-2xl mb-4 shadow-sm border border-gray-100 p-4">
+    <View className="flex-1 bg-white rounded-2xl mb-4 shadow-sm border border-gray-100 p-4">
       {/* ✅ Top row: pressable content + separate delete button */}
       <View className="flex-row items-start">
         <TouchableOpacity

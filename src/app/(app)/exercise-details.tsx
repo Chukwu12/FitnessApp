@@ -99,15 +99,15 @@ export default function ExerciseDetail() {
 
   // ✅ Hero image source:
   const heroUri = useMemo(() => {
-  if (exercise?.exerciseId && BACKEND_URL) {
-    return `${BACKEND_URL}/api/gifs/exercise/${exercise.exerciseId}`;
-  }
-  // optional: fallback only if it's NOT the csb url
-  if (exercise?.gifUrl && !exercise.gifUrl.includes(".csb.app")) {
-    return exercise.gifUrl;
-  }
-  return undefined;
-}, [exercise?.exerciseId, exercise?.gifUrl, BACKEND_URL]);
+    if (exercise?.exerciseId && BACKEND_URL) {
+      return `${BACKEND_URL}/api/gifs/exercise/${exercise.exerciseId}`;
+    }
+    // optional: fallback only if it's NOT the csb url
+    if (exercise?.gifUrl && !exercise.gifUrl.includes(".csb.app")) {
+      return exercise.gifUrl;
+    }
+    return undefined;
+  }, [exercise?.exerciseId, exercise?.gifUrl, BACKEND_URL]);
 
 
   return (
@@ -137,8 +137,8 @@ export default function ExerciseDetail() {
               source={heroUri ? { uri: heroUri } : undefined}
               style={{ width: "100%", height: "100%" }}
               contentFit="cover"
-              cachePolicy="disk"     
-              transition={0}         
+              cachePolicy="disk"
+              transition={0}
             />
           ) : (
             <View className="flex-1 items-center justify-center">
@@ -288,10 +288,10 @@ export default function ExerciseDetail() {
             {/* AI Coach button */}
             <TouchableOpacity
               className={`rounded-xl py-4 items-center justify-center ${aiLoading
-                  ? "bg-gray-400"
-                  : aiGuidance
-                    ? "bg-green-500"
-                    : "bg-blue-500"
+                ? "bg-gray-400"
+                : aiGuidance
+                  ? "bg-green-500"
+                  : "bg-blue-500"
                 }`}
               onPress={getAiGuidance}
               disabled={aiLoading}

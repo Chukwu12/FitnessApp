@@ -7,6 +7,8 @@ const cors = require("cors");
 const gifsRouter = require("./scripts/routes/gifs");
 const aiRouter = require("./scripts/routes/ai");
 const deleteWorkoutRouter = require("./scripts/routes/delete-workout");
+const workoutsRouter = require("./scripts/routes/workouts");
+const sanityDebugRouter = require("./scripts/routes/sanity-debug");
 
 const app = express();
 
@@ -54,6 +56,8 @@ app.get("/debug/env", (_req, res) => {
 app.use("/api/gifs", gifsRouter);
 app.use("/api/ai", aiRouter);
 app.use("/api/delete-workout", deleteWorkoutRouter);
+app.use("/api/workouts", workoutsRouter);
+app.use("/api/debug/sanity", sanityDebugRouter);
 
 // ✅ bind to all interfaces (required for CodeSandbox)
 app.listen(PORT, "0.0.0.0", () => {

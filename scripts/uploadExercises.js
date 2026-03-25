@@ -20,7 +20,7 @@ const client = createClient({
 // 2️⃣ RapidAPI Setup
 // -----------------------------
 const API_BASE = "https://exercisedb.p.rapidapi.com/exercises";
-const RAPID_API_KEY = process.env.RAPIDAPI_KEY;
+const RAPID_API_KEY = process.env.RAPID_API_KEY;
 const API_HEADERS = {
   "X-RapidAPI-Key": RAPID_API_KEY,
   "X-RapidAPI-Host": "exercisedb.p.rapidapi.com",
