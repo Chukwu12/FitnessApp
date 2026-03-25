@@ -6,8 +6,20 @@ export default function Layout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: { height: 64, paddingBottom: 3, paddingTop: 3 },
-        tabBarLabelStyle: { fontSize: 11 },
+        tabBarActiveTintColor: "#22C55E",
+        tabBarInactiveTintColor: "#94A3B8",
+        tabBarStyle: {
+          height: 70,
+          paddingBottom: 8,
+          paddingTop: 8,
+          backgroundColor: "#020617",
+          borderTopColor: "#1E293B",
+          borderTopWidth: 1,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: "600",
+        },
       }}
     >
       <Tabs.Screen
@@ -39,7 +51,6 @@ export default function Layout() {
           ),
         }}
       />
-
 
       <Tabs.Screen
         name="history"

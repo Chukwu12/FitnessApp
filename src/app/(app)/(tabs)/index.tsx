@@ -1,91 +1,333 @@
-import { Link } from "expo-router";
 import React from "react";
-import { SafeAreaView, Text, View } from "react-native";
+import { SafeAreaView, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import { LinearGradient } from "expo-linear-gradient";
 
+// ⚠️ NOTE: This top LinearGradient is currently unused — you should REMOVE it
+// because it’s not wrapped around any component.
+// We'll properly use it inside TodayWorkoutCard later.
 
 export default function Page() {
+  // 👤 USER DATA (replace with real data later)
+  const userName = "Okey";
+
+  // 🏋️ TODAY'S WORKOUT DATA
+  const todayWorkout = {
+    title: "Full Body Strength",
+    duration: "45 min",
+    exercises: 6,
+  };
+
+  // ▶️ CHECK IF USER HAS ACTIVE WORKOUT
+  const hasActiveWorkout = true;
+
+  // 📊 STATS DATA (Section you're currently working on)
+  const stats = [
+  { label: "Workouts", value: "12", icon: "bars" as const },
+  { label: "Minutes", value: "320", icon: "clockcircleo" as const },
+  { label: "Streak", value: "5 days", icon: "star" as const },
+];
+
+  // 🕘 RECENT ACTIVITY DATA
+  const recentActivity = [
+    { name: "Upper Body Blast", date: "Yesterday", duration: "42 min" },
+    { name: "Leg Day", date: "Mar 23", duration: "50 min" },
+    { name: "Core & Cardio", date: "Mar 21", duration: "30 min" },
+  ];
+
   return (
-    <SafeAreaView className="flex flex-1">
-      <Header />
-      <Content />
+    // 🧱 MAIN SCREEN CONTAINER
+    <SafeAreaView className="flex-1 bg-slate-950">
+
+      {/* 📜 SCROLLABLE CONTENT */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
+        className="px-4"
+      >
+        {/* 🔹 HEADER / GREETING */}
+        <HomeHeader userName={userName} />
+
+        {/* 🔥 TODAY'S WORKOUT CARD */}
+        <TodayWorkoutCard workout={todayWorkout} />
+
+        {/* 📊 STATS SECTION (YOU ARE HERE) */}
+        <QuickStatsRow stats={stats} />
+
+        {/* ▶️ CONTINUE / START WORKOUT */}
+        <ContinueWorkoutCard hasActiveWorkout={hasActiveWorkout} />
+
+        {/* 🕘 RECENT ACTIVITY */}
+        <RecentActivitySection items={recentActivity} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
-function Content() {
+//
+// 🔹 HEADER COMPONENT
+//
+function HomeHeader({ userName }: { userName: string }) {
   return (
-    <View className="flex-1">
-      <View className="py-12 md:py-24 lg:py-32 xl:py-48">
-        <View className="px-4 md:px-6">
-          <View className="flex flex-col items-center gap-4 text-center">
-            <Text
-              role="heading"
-              className="text-3xl text-center native:text-5xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl"
-            >
-              Expo + Tailwind (NativeWind) Template
-            </Text>
+    <View className="flex-row items-center justify-between pt-4 pb-6">
+      <View>
+        {/* 👋 GREETING TEXT */}
+        <Text className="text-slate-400 text-base">Good Morning 👋</Text>
 
-            <Text className="mx-auto max-w-[700px] text-lg text-center md:text-xl">
-              This template sets up Expo and Tailwind (NativeWind) allowing you
-              to quickly get started with my YouTube tutorial!
-            </Text>
-            <Link href="https://www.youtube.com/@sonnysangha" target="_blank">
-              <Text className="text-lg text-center text-blue-500 hover:text-blue-700 underline md:text-xl dark:text-blue-400 dark:hover:text-blue-300">
-                https://www.youtube.com/@sonnysangha
-              </Text>
-            </Link>
+        {/* 👤 USER NAME */}
+        <Text className="text-white text-3xl font-bold mt-1">{userName}</Text>
 
-            <View className="gap-4">
-              <Link
-                suppressHighlighting
-                className="flex h-9 items-center justify-center overflow-hidden rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-gray-50 web:shadow ios:shadow transition-colors hover:bg-gray-900/90 active:bg-gray-400/90 web:focus-visible:outline-none web:focus-visible:ring-1 focus-visible:ring-gray-950 disabled:pointer-events-none disabled:opacity-50 dark:bg-gray-50 dark:text-gray-900 dark:hover:bg-gray-50/90 dark:focus-visible:ring-gray-300"
-                href="https://www.youtube.com/@sonnysangha"
-              >
-                Visit my YouTube Channel
-              </Link>
-            </View>
+        {/* 💬 SUBTEXT */}
+        <Text className="text-slate-500 text-sm mt-1">
+          Ready to build consistency today?
+        </Text>
+      </View>
 
-            <View className="gap-4">
-              <Link
-                suppressHighlighting
-                className="flex h-9 items-center justify-center overflow-hidden rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-gray-50 web:shadow ios:shadow transition-colors hover:bg-gray-900/90 active:bg-gray-400/90 web:focus-visible:outline-none web:focus-visible:ring-1 focus-visible:ring-gray-950 disabled:pointer-events-none disabled:opacity-50 dark:bg-gray-50 dark:text-gray-900 dark:hover:bg-gray-50/90 dark:focus-visible:ring-gray-300"
-                href="https://www.papareact.com/course"
-              >
-                Get the Complete Source Code (Plus 60+ builds) ❤️
-              </Link>
-            </View>
-
-            <View className="gap-4">
-              <Link
-                suppressHighlighting
-                className="flex h-9 items-center justify-center overflow-hidden rounded-md bg-green-700 px-4 py-2 text-sm font-medium text-gray-50 web:shadow ios:shadow transition-colors hover:bg-gray-900/90 active:bg-gray-400/90 web:focus-visible:outline-none web:focus-visible:ring-1 focus-visible:ring-gray-950 disabled:pointer-events-none disabled:opacity-50 dark:bg-gray-50 dark:text-gray-900 dark:hover:bg-gray-50/90 dark:focus-visible:ring-gray-300"
-                href="https://www.papareact.com/course"
-              >
-                Join My Course & Learn to Code with AI 💚 (1000+ Students)
-              </Link>
-            </View>
-          </View>
-        </View>
+      {/* 👤 PROFILE ICON */}
+      <View className="h-12 w-12 rounded-full bg-slate-800 items-center justify-center border border-slate-700">
+        <AntDesign name="user" size={20} color="#F8FAFC" />
       </View>
     </View>
   );
 }
 
-function Header() {
+//
+// 🔥 TODAY WORKOUT CARD (MAIN FEATURE)
+//
+//
+// 🔥 TODAY WORKOUT CARD (UPGRADED WITH GRADIENT)
+//
+function TodayWorkoutCard({
+  workout,
+}: {
+  workout: { title: string; duration: string; exercises: number };
+}) {
   return (
-    <View>
-      <View className="px-4 lg:px-6 h-14 flex items-center flex-row justify-between ">
-        <Link className="font-bold flex-1 items-center justify-center" href="/">
-          PAPAFAM
-        </Link>
-        <View className="">
-          <Link
-            className="text-md font-medium hover:underline web:underline-offset-4"
-            href="https://www.papareact.com/course"
-          >
-            Join My Course ❤️
-          </Link>
+    // GRADIENT CARD BACKGROUND
+    <LinearGradient
+      colors={["#22C55E", "#16A34A"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      className="rounded-3xl p-5 mb-5"
+    >
+      {/* 🔝 TOP ROW */}
+      <View className="flex-row items-start justify-between">
+        {/* 📄 LEFT SIDE CONTENT */}
+        <View className="flex-1 pr-4">
+          {/* 🏷️ SMALL LABEL */}
+          <Text className="text-slate-950 text-sm font-semibold uppercase tracking-wide">
+            Today’s Workout
+          </Text>
+
+          {/* 💪 WORKOUT TITLE */}
+          <Text className="text-slate-950 text-3xl font-extrabold mt-2">
+            {workout.title}
+          </Text>
+
+          {/* ⏱️ WORKOUT META INFO */}
+          <View className="flex-row items-center mt-3">
+            {/* DURATION */}
+            <View className="flex-row items-center mr-4">
+              <AntDesign name="clockcircleo" size={14} color="#020617" />
+              <Text className="text-slate-950 ml-2 font-medium">
+                {workout.duration}
+              </Text>
+            </View>
+
+            {/* EXERCISE COUNT */}
+            <View className="flex-row items-center">
+              <AntDesign name="book" size={14} color="#020617" />
+              <Text className="text-slate-950 ml-2 font-medium">
+                {workout.exercises} exercises
+              </Text>
+            </View>
+          </View>
         </View>
+
+        {/* ▶️ PLAY ICON BOX */}
+        <View className="h-14 w-14 rounded-2xl bg-white/20 items-center justify-center border border-white/20">
+          <AntDesign name="play" size={22} color="#020617" />
+        </View>
+      </View>
+
+      {/* ▶️ START BUTTON */}
+      <TouchableOpacity className="bg-slate-950 rounded-2xl py-4 items-center mt-5 active:opacity-90">
+        <Text className="text-white font-semibold text-base">
+          Start Workout
+        </Text>
+      </TouchableOpacity>
+    </LinearGradient>
+  );
+}
+
+//
+// 📊 STATS ROW
+//
+function QuickStatsRow({
+  stats,
+}: {
+  stats: {
+    label: string;
+    value: string;
+    icon: keyof typeof AntDesign.glyphMap;
+  }[];
+}) {
+  return (
+    <View className="mb-5">
+
+      {/* 🏷️ SECTION TITLE */}
+      <Text className="text-white text-xl font-bold mb-3">Your Progress</Text>
+
+      {/* 📦 STATS CONTAINER */}
+      <View className="flex-row justify-between gap-3">
+
+        {/* 🔁 LOOP THROUGH STATS */}
+        {stats.map((stat) => (
+          <View
+            key={stat.label}
+
+            // 🎨 EACH STAT CARD
+            className="flex-1 bg-slate-900 border border-slate-700 rounded-2xl p-4 active:scale-95"
+          >
+            {/* 📊 ICON */}
+            <AntDesign name={stat.icon} size={18} color="#22C55E" />
+
+            {/* 🔢 VALUE */}
+            <Text className="text-white text-lg font-bold mt-3">
+              {stat.value}
+            </Text>
+
+            {/* 🏷️ LABEL */}
+            <Text className="text-slate-400 text-sm mt-1">
+              {stat.label}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+//
+// ▶️ CONTINUE / START WORKOUT CARD
+//
+function ContinueWorkoutCard({ hasActiveWorkout }: { hasActiveWorkout: boolean }) {
+  return (
+    // 🎨 MAIN CARD CONTAINER
+    <View className="bg-slate-900 border border-slate-700 rounded-3xl p-5 mb-5">
+      {/* 🔝 TOP ROW */}
+      <View className="flex-row items-start justify-between">
+        {/* 📄 LEFT SIDE CONTENT */}
+        <View className="flex-1 pr-4">
+          {/* 🏷️ TITLE */}
+          <Text className="text-white text-xl font-bold">
+            {hasActiveWorkout ? "Continue Workout" : "Start New Workout"}
+          </Text>
+
+          {/* 💬 DESCRIPTION */}
+          <Text className="text-slate-400 mt-2 leading-6">
+            {hasActiveWorkout
+              ? "You have an active session in progress. Pick up where you left off."
+              : "Create a new training session and keep your momentum going."}
+          </Text>
+        </View>
+
+        {/* ➡️ ACTION ICON BOX */}
+        <View className="h-12 w-12 rounded-2xl bg-slate-800 border border-slate-700 items-center justify-center">
+          <AntDesign
+            name={hasActiveWorkout ? "arrowright" : "plus"}
+            size={20}
+            color="#22C55E"
+          />
+        </View>
+      </View>
+
+      {/* 📈 PROGRESS BAR */}
+      {hasActiveWorkout && (
+        <View className="mt-5">
+          {/* TRACK */}
+          <View className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+            {/* FILL */}
+            <View
+              style={{ width: "66%" }}
+              className="h-2 bg-green-500 rounded-full"
+            />
+          </View>
+
+          {/* PROGRESS LABEL */}
+          <Text className="text-slate-500 text-xs mt-2">
+            Workout progress: 66%
+          </Text>
+        </View>
+      )}
+
+      {/* ▶️ PRIMARY BUTTON */}
+      <TouchableOpacity className="bg-green-500 rounded-2xl py-4 items-center mt-5 active:opacity-90">
+        <Text className="text-slate-950 font-bold text-base">
+          {hasActiveWorkout ? "Resume Session" : "Create Workout"}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+//
+// 🕘 RECENT ACTIVITY SECTION
+//
+function RecentActivitySection({
+  items,
+}: {
+  items: { name: string; date: string; duration: string }[];
+}) {
+  return (
+    <View className="mb-6">
+
+      {/* 🔝 HEADER */}
+      <View className="flex-row items-center justify-between mb-4">
+        <Text className="text-white text-xl font-bold">
+          Recent Activity
+        </Text>
+
+        <Text className="text-green-500 font-semibold text-sm">
+          See all
+        </Text>
+      </View>
+
+      {/* 📋 LIST */}
+      <View className="gap-3">
+        {items.map((item) => (
+          <View
+            key={`${item.name}-${item.date}`}
+
+            // 🎨 CARD CONTAINER
+            className="bg-slate-900 border border-slate-700 rounded-2xl p-4 flex-row items-center justify-between active:opacity-90"
+          >
+            {/* LEFT SIDE */}
+            <View className="flex-row items-center flex-1 pr-3">
+
+              {/* 📅 ICON BOX */}
+              <View className="h-12 w-12 rounded-2xl bg-slate-700 items-center justify-center mr-3">
+                <AntDesign name="calendar" size={18} color="#38BDF8" />
+              </View>
+
+              {/* TEXT CONTENT */}
+              <View className="flex-1">
+                {/* WORKOUT NAME */}
+                <Text className="text-white font-semibold text-base">
+                  {item.name}
+                </Text>
+
+                {/* META INFO */}
+                <Text className="text-slate-400 text-sm mt-1">
+                  {item.date} • {item.duration}
+                </Text>
+              </View>
+            </View>
+
+            {/* ➡️ RIGHT ARROW */}
+            <AntDesign name="right" size={16} color="#64748B" />
+          </View>
+        ))}
       </View>
     </View>
   );
