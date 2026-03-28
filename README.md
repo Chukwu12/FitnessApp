@@ -1,16 +1,34 @@
-# Expo Router and Tailwind CSS
+# 🏋️ KC Fitness App (AI-Powered Workout App)
 
-Use [Expo Router](https://docs.expo.dev/router/introduction/) with [Nativewind](https://www.nativewind.dev/v4/overview/) styling.
+An AI-powered cross-platform fitness application that generates personalized workout plans and tracks user progress in real time.
 
-## 🚀 How to use
+---
 
-```sh
-npx create-expo-app -e with-tailwindcss
-```
+## 🚀 Features
 
-## Deploy
+- 🤖 AI-generated workout plans using OpenAI API  
+- 📊 Workout tracking with sets, reps, and weights  
+- 🔐 Secure authentication with Clerk  
+- 📱 Cross-platform support (iOS & Android via Expo)  
+- 🎯 Personalized fitness experience based on user input  
+- ⚡ Clean and responsive mobile UI with NativeWind  
 
-Deploy on all platforms with Expo Application Services (EAS).
+---
 
-- Deploy the website: `npx eas-cli deploy` — [Learn more](https://docs.expo.dev/eas/hosting/get-started/)
-- Deploy on iOS and Android using: `npx eas-cli build` — [Learn more](https://expo.dev/eas)
+## 🧠 Tech Stack
+
+- ⚛️ React Native (Expo)
+- 🧭 Expo Router
+- 🎨 NativeWind (Tailwind CSS for React Native)
+- 🔐 Clerk Authentication
+- 🧩 Sanity CMS
+- 🤖 OpenAI API
+- 🟦 TypeScript
+
+---
+
+## 🛠️ Getting Started
+
+### 1️⃣ Install dependencies
+```bash
+npm install
