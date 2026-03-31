@@ -3,6 +3,7 @@ import {
   View,
   Text,
   StatusBar,
+  SafeAreaView,
   Platform,
   TouchableOpacity,
   Alert,
@@ -17,7 +18,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@clerk/clerk-expo";
 import { useWorkoutStore } from "@/store/workout-store";
 import ExerciseSelectionModal from "./components/ExerciseSelectionModal";
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL?.replace(/\/$/, "") ?? "";
+const BACKEND_URL =
+  process.env.EXPO_PUBLIC_BACKEND_URL?.replace(/\/$/, "") ?? "";
 
 export default function ActiveWorkout() {
   const { userId, isLoaded } = useAuth();
@@ -32,11 +34,10 @@ export default function ActiveWorkout() {
   const hasHydrated = useWorkoutStore((s) => s.hasHydrated);
   const removeExercise = useWorkoutStore((s) => s.removeExercise);
 
- 
-
-
   const hasExercises = workoutExercises.length > 0;
-  const everyExerciseHasASet = workoutExercises.every((ex) => ex.sets.length > 0);
+  const everyExerciseHasASet = workoutExercises.every(
+    (ex) => ex.sets.length > 0
+  );
   const allSetsCompleted = workoutExercises.every((ex) =>
     ex.sets.every((set) => set.isCompleted)
   );
@@ -44,12 +45,9 @@ export default function ActiveWorkout() {
   const canCompleteWorkout =
     !isSaving && hasExercises && everyExerciseHasASet && allSetsCompleted;
 
-
   // ✅ new: actions
   const addNewSet = useWorkoutStore((s) => s.addNewSet);
   const setWorkoutExercises = useWorkoutStore((s) => s.setWorkoutExercises);
-
-  
 
   const deleteExercise = (exerciseId: string) => {
     console.log("deleteExercise called with", exerciseId);
@@ -88,25 +86,24 @@ export default function ActiveWorkout() {
       exercises.map((exercise) =>
         exercise.id === exerciseId
           ? {
-            ...exercise,
-            sets: exercise.sets.map((set) =>
-              set.id === setId ? { ...set, [field]: value } : set
-            ),
-          }
+              ...exercise,
+              sets: exercise.sets.map((set) =>
+                set.id === setId ? { ...set, [field]: value } : set
+              ),
+            }
           : exercise
       )
     );
   };
-
 
   const deleteSet = (exerciseId: string, setId: string) => {
     setWorkoutExercises((exercises) =>
       exercises.map((exercise) =>
         exercise.id === exerciseId
           ? {
-            ...exercise,
-            sets: exercise.sets.filter((set) => set.id !== setId),
-          }
+              ...exercise,
+              sets: exercise.sets.filter((set) => set.id !== setId),
+            }
           : exercise
       )
     );
@@ -117,25 +114,23 @@ export default function ActiveWorkout() {
       exercises.map((exercise) =>
         exercise.id === exerciseId
           ? {
-            ...exercise,
-            sets: exercise.sets.map((set) =>
-              set.id === setId
-                ? { ...set, isCompleted: !set.isCompleted }
-                : set
-            ),
-          }
+              ...exercise,
+              sets: exercise.sets.map((set) =>
+                set.id === setId
+                  ? { ...set, isCompleted: !set.isCompleted }
+                  : set
+              ),
+            }
           : exercise
       )
     );
   };
 
-
-
-
-
   //Use the stopwatch for timing with offset based on workout start time
   const router = useRouter();
-  const { seconds, minutes, totalSeconds, reset } = useStopwatch({ autoStart: true });
+  const { seconds, minutes, totalSeconds, reset } = useStopwatch({
+    autoStart: true,
+  });
 
   // ✅ optional but recommended for web
   if (Platform.OS === "web" && !hasHydrated) {
@@ -185,7 +180,7 @@ export default function ActiveWorkout() {
         { text: "Complete", onPress: async () => await endWorkout() },
       ]
     );
-  }
+  };
 
   const endWorkout = async () => {
     const saved = await saveWorkoutToDatabase();
@@ -194,109 +189,111 @@ export default function ActiveWorkout() {
       Alert.alert("Workout Saved", "Your workout has been saved successfully.");
       //Reset workout and navigate back
       resetWorkout();
-      router.replace('/(app)(tabs)/history?refresh=true');
+      router.replace("/(app)/(tabs)/history?refresh=true");
     }
   };
 
-const saveWorkoutToDatabase = async (): Promise<boolean> => {
-  if (isSaving) return false;
-  setIsSaving(true);
+  const saveWorkoutToDatabase = async (): Promise<boolean> => {
+    if (isSaving) return false;
+    setIsSaving(true);
 
-  try {
-    if (!isLoaded) {
-      Alert.alert("Please wait", "Authentication is still loading. Try again in a moment.");
-      return false;
-    }
+    try {
+      if (!isLoaded) {
+        Alert.alert(
+          "Please wait",
+          "Authentication is still loading. Try again in a moment."
+        );
+        return false;
+      }
 
-    if (!userId) {
-      Alert.alert("Not signed in", "Please sign in to save your workout.");
-      return false;
-    }
+      if (!userId) {
+        Alert.alert("Not signed in", "Please sign in to save your workout.");
+        return false;
+      }
 
-    if (!BACKEND_URL) {
-      Alert.alert("Missing config", "EXPO_PUBLIC_BACKEND_URL is not set.");
-      return false;
-    }
+      if (!BACKEND_URL) {
+        Alert.alert("Missing config", "EXPO_PUBLIC_BACKEND_URL is not set.");
+        return false;
+      }
 
-    const durationInSeconds = totalSeconds;
+      const durationInSeconds = totalSeconds;
 
-    // 1) Build exercises payload (only completed sets)
-    const exercisesForSanity = workoutExercises
-      .map((ex) => {
-        const completedSets = ex.sets
-          .filter((s) => s.isCompleted)
-          .map((s) => ({
-            reps: Number(s.reps) || 0,
-            weight: Number(s.weight) || 0,
-            weightUnit: s.weightUnit, // 'lbs' | 'kg'
-          }));
+      // 1) Build exercises payload (only completed sets)
+      const exercisesForSanity = workoutExercises
+        .map((ex) => {
+          const completedSets = ex.sets
+            .filter((s) => s.isCompleted)
+            .map((s) => ({
+              reps: Number(s.reps) || 0,
+              weight: Number(s.weight) || 0,
+              weightUnit: s.weightUnit, // 'lbs' | 'kg'
+            }));
 
-        return {
-          exercise: {
-            _type: "reference",
-            _ref: ex.sanityId,
-          },
-          sets: completedSets,
-        };
-      })
-      // 2) IMPORTANT: remove exercises that have 0 completed sets (schema requires min(1))
-      .filter((ex) => ex.sets.length > 0);
+          return {
+            exercise: {
+              _type: "reference",
+              _ref: ex.sanityId,
+            },
+            sets: completedSets,
+          };
+        })
+        // 2) IMPORTANT: remove exercises that have 0 completed sets (schema requires min(1))
+        .filter((ex) => ex.sets.length > 0);
 
-    // Optional guard: require at least 1 completed set in the workout
-    if (exercisesForSanity.length === 0) {
-      Alert.alert("Incomplete", "Complete at least one set before saving.");
-      return false;
-    }
+      // Optional guard: require at least 1 completed set in the workout
+      if (exercisesForSanity.length === 0) {
+        Alert.alert("Incomplete", "Complete at least one set before saving.");
+        return false;
+      }
 
-    const workoutData = {
-      userId,
-      date: new Date().toISOString(),
-      duration: durationInSeconds,
-      exercises: exercisesForSanity,
-    };
+      const workoutData = {
+        userId,
+        date: new Date().toISOString(),
+        duration: durationInSeconds,
+        exercises: exercisesForSanity,
+      };
 
-    // Keep backend payload clean, but support direct Sanity writes if endpoint changes.
-    const isDirectSanityEndpoint = BACKEND_URL.includes("api.sanity.io");
-    const requestPayload = isDirectSanityEndpoint
-      ? { _type: "workout", ...workoutData }
-      : workoutData;
+      // Keep backend payload clean, but support direct Sanity writes if endpoint changes.
+      const isDirectSanityEndpoint = BACKEND_URL.includes("api.sanity.io");
+      const requestPayload = isDirectSanityEndpoint
+        ? { _type: "workout", ...workoutData }
+        : workoutData;
 
-    // 3) Send to backend (recommended)
-    const res = await fetch(
-  `${BACKEND_URL}/api/workouts`,
-      {
+      // 3) Send to backend (recommended)
+      const res = await fetch(`${BACKEND_URL}/api/workouts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestPayload),
-      }
-    );
+      });
 
-    if (!res.ok) {
-      const text = await res.text();
-      console.error("Save workout failed:", text);
-      let message = "Failed to save workout. Try again.";
-      try {
-        const parsed = JSON.parse(text);
-        if (parsed?.error) {
-          message = parsed.error;
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Save workout failed:", text);
+        let message = "Failed to save workout. Try again.";
+        try {
+          const parsed = JSON.parse(text);
+          if (parsed?.error) {
+            message = parsed.error;
+          }
+        } catch {
+          // Keep default message if backend returns non-JSON text.
         }
-      } catch {
-        // Keep default message if backend returns non-JSON text.
+        Alert.alert("Error", message);
+        return false;
       }
-      Alert.alert("Error", message);
+
+      return true;
+    } catch (err) {
+      console.error("Error saving workout:", err);
+      Alert.alert(
+        "Error",
+        "There was an error saving your workout. Please try again."
+      );
       return false;
+    } finally {
+      setIsSaving(false);
     }
-
-    return true;
-  } catch (err) {
-    console.error("Error saving workout:", err);
-    Alert.alert("Error", "There was an error saving your workout. Please try again.");
-    return false;
-  } finally {
-    setIsSaving(false);
-  }
-};
-
+  };
 
   const cancelWorkout = () => {
     Alert.alert(
@@ -315,42 +312,46 @@ const saveWorkoutToDatabase = async (): Promise<boolean> => {
     );
   };
 
+  const totalSets = workoutExercises.reduce((total, exercise) => {
+    return total + exercise.sets.length;
+  }, 0);
+
+  const completedSets = workoutExercises.reduce((total, exercise) => {
+    return total + exercise.sets.filter((set) => set.isCompleted).length;
+  }, 0);
+
+  const progressPercent =
+    totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
+
   const addExercise = () => setShowExerciseSelection(true);
 
-
   return (
-    <View className="flex-1">
-      <StatusBar barStyle="light-content" backgroundColor="#1F2937" />
-
-      {/* safe area spacer */}
-      <View
-        className="bg-gray-800"
-        style={{
-          paddingTop: Platform.OS === "ios" ? 55 : StatusBar.currentHeight || 0,
-        }}
-      />
-
-      {/* Header */}
-      <View className="bg-gray-800 px-6 py-4">
+    <SafeAreaView className="flex-1 bg-slate-950">
+      {/* 🔝 HEADER */}
+      <View className="px-4 pt-4 pb-3 border-b border-slate-800">
         <View className="flex-row items-center justify-between">
+          {/* TITLE + TIMER */}
           <View>
-            <Text className="text-white text-xl font-semibold">
-              Active Workout
+            <Text className="text-white text-lg font-bold">Active Workout</Text>
+            <Text className="text-green-500 text-sm mt-1">
+              {getWorkoutDuration()}
             </Text>
-            <Text className="text-gray-300">{getWorkoutDuration()}</Text>
           </View>
 
-          <View className="flex-row items-center gap-2">
-            {/* Weight Unit Toggle */}
-            <View className="flex-row bg-gray-700 rounded-lg p-1">
+          {/* CONTROLS */}
+          <View className="flex-row items-center gap-3">
+            {/* UNIT TOGGLE */}
+            <View className="flex-row bg-slate-800 rounded-xl overflow-hidden">
               <TouchableOpacity
                 onPress={() => setWeightUnit("lbs")}
-                className={`px-3 py-1 rounded ${weightUnit === "lbs" ? "bg-blue-600" : ""
-                  }`}
+                className={`px-3 py-1 ${
+                  weightUnit === "lbs" ? "bg-green-500" : ""
+                }`}
               >
                 <Text
-                  className={`text-sm font-medium ${weightUnit === "lbs" ? "text-white" : "text-gray-300"
-                    }`}
+                  className={
+                    weightUnit === "lbs" ? "text-slate-950" : "text-slate-400"
+                  }
                 >
                   lbs
                 </Text>
@@ -358,261 +359,268 @@ const saveWorkoutToDatabase = async (): Promise<boolean> => {
 
               <TouchableOpacity
                 onPress={() => setWeightUnit("kg")}
-                className={`px-3 py-1 rounded ${weightUnit === "kg" ? "bg-blue-600" : ""
-                  }`}
+                className={`px-3 py-1 ${
+                  weightUnit === "kg" ? "bg-green-500" : ""
+                }`}
               >
                 <Text
-                  className={`text-sm font-medium ${weightUnit === "kg" ? "text-white" : "text-gray-300"
-                    }`}
+                  className={
+                    weightUnit === "kg" ? "text-slate-950" : "text-slate-400"
+                  }
                 >
                   kg
                 </Text>
               </TouchableOpacity>
             </View>
 
+            {/* END */}
             <TouchableOpacity
               onPress={cancelWorkout}
-              className="bg-red-600 px-4 py-2 rounded-lg"
+              className="bg-red-500 px-3 py-2 rounded-xl"
             >
-              <Text className="text-white font-medium">End Workout</Text>
+              <Text className="text-white text-xs font-semibold">End</Text>
             </TouchableOpacity>
           </View>
         </View>
       </View>
 
-      {/* Content */}
-      <View className="flex-1 bg-white">
-        <View className="px-6 mt-4">
-          <Text className="text-center text-gray-600 mb-2">
-            {workoutExercises.length} exercises
+      {/* 📜 CONTENT */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 140 }}
+        className="px-4"
+      >
+        {/* 📊 SUMMARY */}
+        <View className="bg-slate-900 border border-slate-700 rounded-3xl p-5 mt-4 mb-5">
+          {/* TITLE */}
+          <Text className="text-white font-semibold text-base">
+            Workout Progress
           </Text>
+
+          {/* META INFO */}
+          <Text className="text-slate-400 text-sm mt-1">
+            {workoutExercises.length} exercise
+            {workoutExercises.length !== 1 ? "s" : ""} • {completedSets}/
+            {totalSets} sets completed
+          </Text>
+          <View className="h-2 w-full bg-slate-800 rounded-full mt-4 overflow-hidden">
+            <View
+              style={{ width: `${progressPercent}%` }}
+              className="h-2 bg-green-500 rounded-full"
+            />
+          </View>
         </View>
 
-        {/* If no exercises, show a message */}
         {workoutExercises.length === 0 && (
-          <View className="bg-gray-50 rounded-2xl p-8 items-center mx-6">
-            <Ionicons name="barbell-outline" size={48} color="#9CA3AF" />
-            <Text className="text-gray-600 text-lg text-center mt-4 font-medium">
+          <View className="bg-slate-900 border border-slate-800 rounded-3xl p-6 items-center mt-2">
+            <View className="h-14 w-14 rounded-2xl bg-slate-800 items-center justify-center mb-4">
+              <Ionicons name="barbell-outline" size={24} color="#22C55E" />
+            </View>
+
+            <Text className="text-white text-lg font-semibold">
               No exercises yet
             </Text>
-            <Text className="text-gray-500 text-center mt-2">
-              Get started by adding your first exercise below
+
+            <Text className="text-slate-400 text-center mt-2 leading-6">
+              Add your first exercise below to start tracking sets, reps, and
+              weight.
             </Text>
           </View>
         )}
 
-        {/* All Exercises - Vertical List */}
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          className="flex-1"
-        >
-          <ScrollView className="flex-1 px-6 mt-4">
-            {workoutExercises.map((exercise) => {
-              const completedCount = exercise.sets.filter(
-                (s) => s.isCompleted
-              ).length;
+        {/* 🏋️ EXERCISES */}
+        {workoutExercises.map((exercise) => {
+          const completedCount = exercise.sets.filter(
+            (s) => s.isCompleted
+          ).length;
 
-              return (
-                <View key={exercise.id} className="mb-8">
-                  {/* Exercise header */}
-                  <View className="flex-row items-center justify-between mb-3">
-                    <TouchableOpacity
-                      onPress={() =>
-                        router.push({
-                          pathname: "/exercise-details",
-                          params: { id: exercise.sanityId },
-                        })
-                      }
-                      className="bg-blue-50 rounded-2xl p-4 flex-1 mr-3"
-                      activeOpacity={0.85}
-                    >
-                      <View className="flex-1">
-                        <Text className="text-xl font-bold text-gray-900 mb-2">
-                          {exercise.name}
-                        </Text>
-                        <Text className="text-gray-600">
-                          {exercise.sets.length} sets {" • "} {completedCount}{" "}
-                          completed
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-
-                    {/* Delete Exercise Button */}
-                    <TouchableOpacity
-                      onPress={() => deleteExercise(exercise.id)}
-                      className="w-10 h-10 rounded-xl items-center justify-center bg-red-500"
-                    >
-                      <Ionicons name="trash" size={16} color="white" />
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* Exercise Sets */}
-                  <View className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-3">
-                    <Text className="text-lg font-semibold text-gray-900 mb-3">
-                      Sets
-                    </Text>
-
-                    {exercise.sets.length === 0 ? (
-                      <Text className="text-gray-500 text-center py-4">
-                        No sets yet. Add your first set below.
-                      </Text>
-                    ) : (
-                      exercise.sets.map((set, setIndex) => (
-                        <View
-                          key={set.id}
-                          className={`py-3 px-3 mb-2 rounded-lg border ${set.isCompleted
-                            ? "bg-green-100 border-green-300"
-                            : "bg-gray-50 border-gray-200"
-                            }`}
-                        >
-                          <View className="flex-row items-center justify-between">
-                            <Text className="text-gray-700 font-medium w-8">
-                              {setIndex + 1}
-                            </Text>
-
-                            {/* Reps */}
-                            <View className="flex-1 mx-2">
-                              <Text className="text-xs text-gray-500 mb-1">
-                                Reps
-                              </Text>
-                              <TextInput
-                                value={set.reps}
-                                onChangeText={(value) =>
-                                  updateSet(exercise.id, set.id, "reps", value)
-                                }
-                                placeholder="0"
-                                keyboardType="numeric"
-                                className={`border rounded-lg px-3 py-2 text-center ${set.isCompleted
-                                  ? "bg-gray-100 border-gray-300 text-gray-500"
-                                  : "bg-white border-gray-300"
-                                  }`}
-                                editable={!set.isCompleted}
-                              />
-                            </View>
-
-                            {/* Weight */}
-                            <View className="flex-1 mx-2">
-                              <Text className="text-xs text-gray-500 mb-1">
-                                Weight
-                              </Text>
-                              <TextInput
-                                value={set.weight}
-                                onChangeText={(value) =>
-                                  updateSet(
-                                    exercise.id,
-                                    set.id,
-                                    "weight",
-                                    value
-                                  )
-                                }
-                                placeholder="0"
-                                keyboardType="numeric"
-                                className={`border rounded-lg px-3 py-2 text-center ${set.isCompleted
-                                  ? "bg-gray-100 border-gray-300 text-gray-500"
-                                  : "bg-white border-gray-300"
-                                  }`}
-                                editable={!set.isCompleted}
-                              />
-                            </View>
-
-                            <Text className="text-gray-600 w-10 text-center">
-                              {set.weightUnit}
-                            </Text>
-
-                            {/* Complete Set Button */}
-                            <TouchableOpacity
-                              onPress={() => toggleSetCompletion(exercise.id, set.id)}
-                              className={`w-12 h-12 rounded-xl items-center justify-center mx-1 ${set.isCompleted ? "bg-green-500" : "bg-gray-200"
-                                }`}
-                              activeOpacity={0.8}
-                            >
-                              <Ionicons
-                                name={set.isCompleted ? "checkmark" : "checkmark-outline"}
-                                size={20}
-                                color={set.isCompleted ? "white" : "#9CA3AF"}
-                              />
-                            </TouchableOpacity>
-
-
-                    
-                            {/* Delete Set Button */}
-                            <TouchableOpacity
-                              onPress={() => deleteSet(exercise.id, set.id)}
-                              className="w-12 h-12 rounded-xl items-center justify-center bg-red-500 ml-1" >
-                              <Ionicons name="trash" size={16} color='white' />
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                      ))
-                    )}
-
-                    {/* Add New Set Button (ONE per exercise) */}
-                    <TouchableOpacity
-                      onPress={() => addNewSet(exercise.id)}
-                      className="bg-blue-100 border-2 border-dashed border-blue-300 rounded-lg items-center mt-2 py-3"
-                      activeOpacity={0.8}
-                    >
-                      <View className="flex-row items-center">
-                        <Ionicons
-                          name="add"
-                          size={16}
-                          color="#3B82F6"
-                          style={{ marginRight: 6 }}
-                        />
-                        <Text className="text-blue-600 font-medium">
-                          Add Set
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              );
-            })}
-
-            {/* Add exercise button */}
-            <TouchableOpacity
-              onPress={addExercise}
-              className="bg-blue-600 rounded-2xl py-4 items-center mb-8 active:bg-blue-700"
-              activeOpacity={0.8}
+          return (
+            <View
+              key={exercise.id}
+              className="bg-slate-900 border border-slate-700 rounded-3xl p-5 mb-5"
             >
-              <View className="flex-row items-center">
-                <Ionicons
-                  name="add"
-                  size={20}
-                  color="white"
-                  style={{ marginRight: 8 }}
-                />
-                <Text className="text-white font-semibold text-lg">
-                  Add Exercise
+              {/* HEADER */}
+              <View className="flex-row justify-between items-center">
+                <Text className="text-white font-semibold">
+                  {exercise.name}
                 </Text>
+
+                <TouchableOpacity onPress={() => deleteExercise(exercise.id)}>
+                  <Ionicons name="trash-outline" size={18} color="#64748B" />
+                </TouchableOpacity>
               </View>
-            </TouchableOpacity>
 
-            {/* Complete Workout Button */}
-            <TouchableOpacity
-              onPress={saveWorkout}
-              className={`rounded-2xl py-4 items-center mb-8 ${canCompleteWorkout ? "bg-green-600 active:bg-green-700" : "bg-gray-400"
-                }`}
-              disabled={!canCompleteWorkout}
-            >
-              {isSaving ? (
-                <View className="flex-row items-center">
-                  <ActivityIndicator size="small" color="white" />
-                  <Text className="text-white font-semibold text-lg ml-2">Saving...</Text>
-                </View>
-              ) : (
-                <Text className="text-white font-semibold text-lg">Complete Workout</Text>
-              )}
-            </TouchableOpacity>
+              <Text className="text-slate-400 text-sm mt-1">
+                {exercise.sets.length} sets • {completedCount} completed
+              </Text>
 
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </View >
+              {/* SETS */}
+              <View className="mt-4">
+                {exercise.sets.length === 0 ? (
+                  // 💤 EMPTY SET STATE
+                  <View className="bg-slate-800/70 rounded-2xl p-4 items-center">
+                    <Text className="text-slate-400 text-sm">
+                      No sets yet. Add your first set below.
+                    </Text>
+                  </View>
+                ) : (
+                  // 🔁 LOOP THROUGH ALL SETS
+                  exercise.sets.map((set, index) => (
+                    <View
+                      key={set.id}
+                      className={`mb-3 rounded-2xl p-3 border ${
+                        set.isCompleted
+                          ? "bg-green-500/15 border-green-500/30"
+                          : "bg-slate-800 border-slate-700"
+                      }`}
+                    >
+                      {/* 🔝 TOP ROW */}
+                      <View className="flex-row items-end">
+                        {/* 🔢 SET NUMBER */}
+                        <View
+                          className={`h-10 w-10 rounded-xl items-center justify-center mr-3 ${
+                            set.isCompleted ? "bg-green-500" : "bg-slate-700"
+                          }`}
+                        >
+                          <Text
+                            className={
+                              set.isCompleted
+                                ? "text-slate-950 font-semibold"
+                                : "text-white font-semibold"
+                            }
+                          >
+                            {index + 1}
+                          </Text>
+                        </View>
 
+                        {/* 📥 REPS INPUT */}
+                        <View className="flex-1 mr-2">
+                          <Text className="text-slate-400 text-xs mb-1">
+                            Reps
+                          </Text>
+                          <TextInput
+                            value={set.reps}
+                            onChangeText={(value) =>
+                              updateSet(exercise.id, set.id, "reps", value)
+                            }
+                            placeholder="0"
+                            placeholderTextColor="#64748B"
+                            keyboardType="numeric"
+                            editable={!set.isCompleted}
+                            className={`rounded-xl px-3 py-3 text-center ${
+                              set.isCompleted
+                                ? "bg-slate-700 text-slate-400"
+                                : "bg-slate-900 text-white border border-slate-600"
+                            }`}
+                          />
+                        </View>
+
+                        {/* 🏋️ WEIGHT INPUT */}
+                        <View className="flex-1 mr-2">
+                          <Text className="text-slate-400 text-xs mb-1">
+                            Weight
+                          </Text>
+                          <TextInput
+                            value={set.weight}
+                            onChangeText={(value) =>
+                              updateSet(exercise.id, set.id, "weight", value)
+                            }
+                            placeholder="0"
+                            placeholderTextColor="#64748B"
+                            keyboardType="numeric"
+                            editable={!set.isCompleted}
+                            className={`rounded-xl px-3 py-3 text-center ${
+                              set.isCompleted
+                                ? "bg-slate-700 text-slate-400"
+                                : "bg-slate-900 text-white border border-slate-600"
+                            }`}
+                          />
+                        </View>
+
+                        {/* ⚖️ UNIT */}
+                        <View className="items-center justify-center px-2 mt-5">
+                          <Text className="text-slate-300 text-sm font-medium">
+                            {set.weightUnit}
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* 🔻 ACTION ROW */}
+                      <View className="flex-row justify-end mt-3">
+                        {/* ✅ COMPLETE SET BUTTON */}
+                        <TouchableOpacity
+                          onPress={() =>
+                            toggleSetCompletion(exercise.id, set.id)
+                          }
+                          className={`h-11 w-11 rounded-xl items-center justify-center mr-2 ${
+                            set.isCompleted ? "bg-green-500" : "bg-slate-700"
+                          }`}
+                          activeOpacity={0.85}
+                        >
+                          <Ionicons
+                            name={
+                              set.isCompleted
+                                ? "checkmark"
+                                : "checkmark-outline"
+                            }
+                            size={20}
+                            color={set.isCompleted ? "#020617" : "#CBD5E1"}
+                          />
+                        </TouchableOpacity>
+
+                        {/* 🗑 DELETE SET BUTTON */}
+                        <TouchableOpacity
+                          onPress={() => deleteSet(exercise.id, set.id)}
+                          className="h-11 w-11 rounded-xl items-center justify-center bg-red-500/90"
+                          activeOpacity={0.85}
+                        >
+                          <Ionicons name="trash" size={16} color="white" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ))
+                )}
+              </View>
+
+              {/* ADD SET */}
+              <TouchableOpacity
+                onPress={() => addNewSet(exercise.id)}
+                className="mt-4 border border-dashed border-slate-600 py-3 rounded-xl items-center active:opacity-80"
+              >
+                <Text className="text-green-500 font-semibold">+ Add Set</Text>
+              </TouchableOpacity>
+            </View>
+          );
+        })}
+      </ScrollView>
+
+      {/* 🔻 BOTTOM */}
+      <View className="absolute bottom-0 left-0 right-0 bg-slate-950 border-t border-slate-800 px-4 py-3">
+        <Text className="text-slate-400 text-center text-sm mb-3">
+          Add exercises and complete all sets to finish your workout
+        </Text>
+        {/* ADD EXERCISE */}
+        <TouchableOpacity
+          onPress={addExercise}
+          className="bg-slate-800 rounded-2xl py-4 items-center mb-3"
+        >
+          <Text className="text-white font-semibold">+ Add Exercise</Text>
+        </TouchableOpacity>
+        {/* COMPLETE WORKOUT */}
+        <TouchableOpacity
+          onPress={saveWorkout}
+          className={`rounded-2xl py-4 items-center ${
+            canCompleteWorkout ? "bg-green-500" : "bg-gray-600"
+          }`}
+          disabled={!canCompleteWorkout}
+        >
+          <Text className="text-slate-950 font-bold">Complete Workout</Text>
+        </TouchableOpacity>
+      </View>
       <ExerciseSelectionModal
         visible={showExerciseSelection}
         onClose={() => setShowExerciseSelection(false)}
       />
-    </View >
+    </SafeAreaView>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Image } from "expo-image";
+import { Ionicons } from "@expo/vector-icons";
 // import type { Exercise } from "@/lib/sanity/types";
 
 type Exercise = {
@@ -9,6 +10,8 @@ type Exercise = {
   difficulty?: string;
   exerciseId?: string;
   gifUrl?: string;
+  target: string;
+  equipment: string;
 };
 
 interface ExerciseCardProps {
@@ -18,7 +21,7 @@ interface ExerciseCardProps {
   // ✅ optional delete support
   onDelete?: () => void;
   showDelete?: boolean;
-
+  isSelected?: boolean;
 }
 
 const normalizeDifficulty = (difficulty?: string) => {
@@ -43,8 +46,10 @@ const getDifficultyColor = (difficulty?: string) => {
   }
 };
 
+const formatName = (name: string) =>
+  name.replace(/\b\w/g, (char) => char.toUpperCase());
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL?.replace(/\/$/, "");
 
 function ExerciseCardBase({
   item,
@@ -52,51 +57,82 @@ function ExerciseCardBase({
   showChevron = false,
   onDelete,
   showDelete = false,
+  isSelected = false,
 }: ExerciseCardProps) {
-  const gifUri = useMemo(() => {
-      if (!item.exerciseId || !BACKEND_URL) return undefined;
-    return `${BACKEND_URL}/api/gifs/exercise/${item.exerciseId}`;
-  }, [item.exerciseId]);
+  const imageUri = useMemo(() => {
+    // 1) Prefer backend proxy if exerciseId exists
+    if (item.exerciseId && BACKEND_URL) {
+      return `${BACKEND_URL}/api/gifs/exercise/${item.exerciseId}`;
+    }
 
-   const imageSource = useMemo(() => (gifUri ? { uri: gifUri } : undefined), [gifUri]);
+    // 2) Fallback to gifUrl from Sanity if available
+    if (item.gifUrl) {
+      return item.gifUrl;
+    }
 
+    // 3) Nothing available
+    return undefined;
+  }, [item.exerciseId, item.gifUrl, BACKEND_URL]);
 
-  
-   return (
-    <View className="flex-1 bg-white rounded-2xl mb-4 shadow-sm border border-gray-100 p-4">
+  const imageSource = useMemo(
+    () => (imageUri ? { uri: imageUri } : undefined),
+    [imageUri]
+  );
+
+  return (
+    <View className="flex-1 bg-slate-900 rounded-3xl mb-4 border border-slate-800 p-4 relative">
+      {isSelected && (
+        <View className="absolute top-3 right-3 z-10 h-8 w-8 rounded-full bg-green-500 items-center justify-center">
+          <Ionicons name="checkmark" size={18} color="#020617" />
+        </View>
+      )}
       {/* ✅ Top row: pressable content + separate delete button */}
       <View className="flex-row items-start">
         <TouchableOpacity
-          className="flex-1"
+          className="flex-1 active:opacity-90 active:scale-[0.98]"
           onPress={onPress}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
         >
           {imageSource ? (
-            <Image
-              source={imageSource}
-              style={{ width: "100%", height: 140, borderRadius: 16, marginBottom: 8 }}
-              contentFit="cover"
-              cachePolicy="disk"
-              transition={0}
-            />
+            <View className="w-full h-[120px] rounded-2xl overflow-hidden mb-3 bg-slate-800/60 items-center justify-center">
+              <Image
+                source={imageSource}
+                style={{ width: "100%", height: "100%" }}
+                contentFit="contain"
+              />
+            </View>
           ) : (
-            <View className="h-[140px] w-full rounded-2xl bg-gray-200 mb-2 items-center justify-center">
-              <Text className="text-gray-500 text-xs">No image</Text>
+            <View className="h-[150px] w-full rounded-2xl bg-slate-800 mb-3 items-center justify-center">
+              <Text className="text-slate-500 text-xs">No image</Text>
             </View>
           )}
 
-          <Text className="text-lg font-semibold text-gray-900" numberOfLines={1}>
-            {item.name}
+          <Text
+            className="text-lg font-semibold text-white mt-1"
+            numberOfLines={2}
+          >
+            {formatName(item.name)}
+          </Text>
+
+          <Text className="text-slate-400 text-sm mt-1">
+            {item.target ? formatName(item.target) : "Unknown"} •{" "}
+            {item.equipment ? formatName(item.equipment) : "Bodyweight"}
           </Text>
 
           <View className="flex-row items-center mt-2">
-            <View className={`px-2 py-1 rounded-full ${getDifficultyColor(item.difficulty)}`}>
-              <Text className="text-xs text-white font-medium">
+            <View
+              className={`px-3 py-1 rounded-full ${getDifficultyColor(
+                item.difficulty
+              )}`}
+            >
+              <Text className="text-xs text-white font-semibold">
                 {normalizeDifficulty(item.difficulty)}
               </Text>
             </View>
 
-            {showChevron ? <Text className="ml-auto text-gray-400">{">"}</Text> : null}
+            {showChevron && (
+              <Text className="ml-auto text-slate-500 text-lg">›</Text>
+            )}
           </View>
         </TouchableOpacity>
 
@@ -106,9 +142,9 @@ function ExerciseCardBase({
             onPress={onDelete}
             activeOpacity={0.8}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            className="ml-3 w-10 h-10 rounded-xl items-center justify-center bg-red-500"
+            className="ml-3 w-10 h-10 rounded-xl items-center justify-center bg-slate-800 border border-slate-700"
           >
-            <Text className="text-white font-bold">🗑️</Text>
+            <Text className="text-slate-400 text-base">🗑️</Text>
           </TouchableOpacity>
         ) : null}
       </View>

@@ -33,6 +33,7 @@ const exercisesQuery = `*[_type == "exercise" && isActive != false] | order(name
   _id,
   exerciseId,
   name,
+  gifUrl,
   bodyPart,
   target,
   secondaryMuscles,
@@ -48,10 +49,14 @@ export default function ExerciseSelectionModal({
 }: ExerciseSelectionModalProps) {
   const addExerciseToWorkout = useWorkoutStore((s) => s.addExerciseToWorkout);
 
+  // State Selections
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(
+    null
+  );
 
   const fetchExercises = async () => {
     try {
@@ -97,11 +102,19 @@ export default function ExerciseSelectionModal({
   }, [exercises, searchQuery]);
 
   const handleExercisePress = (exercise: any) => {
+    // ✅ show instant visual feedback
+    setSelectedExerciseId(exercise?._id ?? null);
+
     addExerciseToWorkout({
       name: exercise?.name ?? "Exercise",
       sanityId: exercise?._id,
     });
-    onClose();
+
+    // ✅ close modal after a very short delay so user sees the feedback
+    setTimeout(() => {
+      setSelectedExerciseId(null);
+      onClose();
+    }, 250);
   };
 
   const onRefresh = async () => {
@@ -117,33 +130,35 @@ export default function ExerciseSelectionModal({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView className="flex-1 bg-white">
-        <StatusBar barStyle="dark-content" />
+      <SafeAreaView className="flex-1 bg-slate-950">
+        <StatusBar barStyle="light-content" />
 
         {/* Header */}
-        <View className="bg-white px-4 pt-4 pb-6 shadow-sm border-b border-gray-100">
+        <View className="bg-slate-950 px-4 pt-4 pb-5 border-b border-slate-800">
           <View className="flex-row items-center justify-between mb-4">
-            <Text className="text-2xl font-bold text-gray-800">Add Exercise</Text>
+            <Text className="text-2xl font-bold text-white">
+              Exercise Library
+            </Text>
 
             <TouchableOpacity
               onPress={onClose}
               className="w-8 h-8 items-center justify-center"
             >
-              <Ionicons name="close" size={24} color="#6B7280" />
+              <Ionicons name="close" size={24} color="#94A3B8" />
             </TouchableOpacity>
           </View>
 
-          <Text className="text-gray-600 mb-4">
-            Tap any exercise to add it to your workout
+          <Text className="text-slate-400 mb-4">
+            Search and add exercises to your workout
           </Text>
 
           {/* Search Bar */}
-          <View className="flex-row items-center bg-gray-100 rounded-xl px-4 py-3">
-            <Ionicons name="search" size={20} color="#6B7280" />
+          <View className="flex-row items-center bg-slate-900 border border-slate-800 rounded-2xl px-4 py-3">
+            <Ionicons name="search" size={20} color="#94A3B8" />
             <TextInput
-              className="flex-1 ml-3 text-gray-800"
+              className="flex-1 ml-3 text-white"
               placeholder="Search name, muscle, equipment..."
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor="#64748B"
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoCapitalize="none"
@@ -152,7 +167,7 @@ export default function ExerciseSelectionModal({
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery("")}>
-                <Ionicons name="close-circle" size={20} color="#6B7280" />
+                <Ionicons name="close-circle" size={20} color="#94A3B8" />
               </TouchableOpacity>
             )}
           </View>
@@ -162,18 +177,22 @@ export default function ExerciseSelectionModal({
         <FlatList
           data={filteredExercises}
           keyExtractor={(item: any) => item._id}
+          numColumns={2}
+          columnWrapperStyle={{ gap: 12, paddingHorizontal: 16 }}
           renderItem={({ item }: any) => (
-            <ExerciseCard
-              item={item}
-              onPress={() => handleExercisePress(item)}
-              showChevron={false}
-            />
+            <View style={{ flex: 1 }}>
+              <ExerciseCard
+                item={item}
+                onPress={() => handleExercisePress(item)}
+                showChevron={false}
+                isSelected={selectedExerciseId === item._id}
+              />
+            </View>
           )}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingTop: 16,
             paddingBottom: 32,
-            paddingHorizontal: 16,
             flexGrow: filteredExercises.length === 0 ? 1 : 0,
           }}
           refreshControl={
@@ -184,7 +203,7 @@ export default function ExerciseSelectionModal({
               {loading ? (
                 <>
                   <ActivityIndicator />
-                  <Text className="text-lg font-semibold text-gray-500 mt-4">
+                  <Text className="text-lg font-semibold text-slate-300 mt-4">
                     Loading exercises...
                   </Text>
                 </>
@@ -192,9 +211,11 @@ export default function ExerciseSelectionModal({
                 <>
                   <Ionicons name="fitness-outline" size={64} color="#D1D5DB" />
                   <Text className="text-lg font-semibold text-gray-400 mt-4">
-                    {searchQuery ? "No exercises found" : "No exercises available"}
+                    {searchQuery
+                      ? "No exercises found"
+                      : "No exercises available"}
                   </Text>
-                  <Text className="text-sm text-gray-400 mt-2">
+                  <Text className="text-sm text-slate-500 mt-2">
                     {searchQuery ? "Try a different search" : "Pull to refresh"}
                   </Text>
                 </>

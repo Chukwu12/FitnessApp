@@ -26,11 +26,12 @@ interface WorkoutStore {
   // actions
   addExerciseToWorkout: (exercise: { name: string; sanityId: string }) => void;
   setWorkoutExercises: (
-    exercises: WorkoutExercise[] | ((prev: WorkoutExercise[]) => WorkoutExercise[])
+    exercises:
+      | WorkoutExercise[]
+      | ((prev: WorkoutExercise[]) => WorkoutExercise[])
   ) => void;
   addNewSet: (exerciseId: string) => void;
   removeExercise: (exerciseId: string) => void;
-
 
   setWeightUnit: (unit: "kg" | "lbs") => void;
   resetWorkout: () => void;
@@ -38,9 +39,6 @@ interface WorkoutStore {
   // hydration action
   setHasHydrated: (v: boolean) => void;
 }
-
-
-
 
 // ✅ Web storage wrapper (no crash if window/localStorage isn't available)
 const webStorage = {
@@ -56,13 +54,13 @@ const webStorage = {
     try {
       if (typeof window === "undefined") return;
       window.localStorage.setItem(name, value);
-    } catch { }
+    } catch {}
   },
   removeItem: (name: string) => {
     try {
       if (typeof window === "undefined") return;
       window.localStorage.removeItem(name);
-    } catch { }
+    } catch {}
   },
 };
 
@@ -135,13 +133,13 @@ export const useWorkoutStore = create<WorkoutStore>()(
 
       removeExercise: (exerciseId) => {
         if (!get().hasHydrated && Platform.OS === "web") return;
-          console.log("hydrated?", hasHydrated);
+        console.log("hydrated?", get().hasHydrated);
         set((state) => ({
-          workoutExercises: state.workoutExercises.filter((ex) => ex.id !== exerciseId),
+          workoutExercises: state.workoutExercises.filter(
+            (ex) => ex.id !== exerciseId
+          ),
         }));
       },
-      
-
 
       setWeightUnit: (unit) => {
         if (!get().hasHydrated && Platform.OS === "web") return;
@@ -166,7 +164,5 @@ export const useWorkoutStore = create<WorkoutStore>()(
         state?.setHasHydrated(true);
       },
     }
-
   )
 );
-
