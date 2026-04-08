@@ -208,7 +208,8 @@ const deleteWorkout = async () => {
           </Text>
           <TouchableOpacity
             onPress={() => router.back()}
-            className="bg-blue-600 px-6 py-3 rounded-lg mt-6">
+            activeOpacity={0.8}
+            className="bg-blue-600 px-6 py-3 rounded-lg mt-6 active:scale-95">
             <Text className="text-white font-medium">Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -219,111 +220,135 @@ const deleteWorkout = async () => {
   const { volume, unit } = getTotalVolume();
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <ScrollView className="flex-1">
-        {/* Workout Summary */}
-        <View className="bg-white p-6 border-b  border-gray-300">
-          <View className="flex-row items-center justify-between mb-4">
-            <Text className="text-lg font-semibold text-gray-900">
-              Workout Summary
-            </Text>
+  <SafeAreaView className="flex-1 bg-slate-950">
+    <ScrollView className="flex-1">
 
-            <TouchableOpacity
-                onPress={handleDeleteWorkout}
-              disabled={deleting}
-              className="bg-red-600 px-4 py-2 rounded-lg flex-row items-center">
+      {/* 🔥 HEADER / SUMMARY */}
+      <View className="px-6 pt-6 pb-5 border-b border-slate-800">
+        <View className="flex-row items-center justify-between mb-4">
+          <Text className="text-xl font-bold text-white">
+            Workout Summary
+          </Text>
 
-              {deleting ? (
-                <ActivityIndicator size='small' color='#ffffff' />
-              ) : (
-                <>
-                  <Ionicons name="trash-outline" size={16} color='#ffffff' />
-                  <Text className="text-white font-medium ml-2"> Delete</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          <View className="flex-row items-center mb-3">
-            <Ionicons name="calendar-outline" size={20} color='#6B7280' />
-            <Text className="text-gray-700 ml-3 font-medium">
-              {formatDate(workout.date)} at {formatTime(workout.date)}
-            </Text>
-          </View>
-
-          <View className="flex-row items-center mb-3">
-            <Ionicons name="time-outline" size={20} color='#6B7280' />
-            <Text className="text-gray-700 ml-3 font-medium">
-              {formatWorkoutDuration(workout.duration)}
-            </Text>
-          </View>
-
-          <View className="flex-row items-center mb-3">
-            <Ionicons name="fitness-outline" size={20} color='#6B7280' />
-            <Text className="text-gray-700 ml-3 font-medium">
-              {workout.exercises?.length || 0} exercises
-            </Text>
-          </View>
-
-             <View className="flex-row items-center mb-3">
-            <Ionicons name="bar-chart-outline" size={20} color='#6B7280' />
-            <Text className="text-gray-700 ml-3 font-medium">
-              {volume.toLocaleString()} {unit} total volume
-            </Text>
-          </View>
-
-          {
-            volume > 0 && (
-              <View className="flex-row items-center">
-                <Ionicons name="barbell-outline" size={20} color='#6B7280' />
-                <Text className="text-gray-700 ml-3 font-medium">
-                  {volume.toLocaleString()} {unit} total volume
-                </Text>
-              </View>
+          <TouchableOpacity
+            onPress={handleDeleteWorkout}
+            disabled={deleting}
+            activeOpacity={0.8}
+            className="bg-red-500 px-4 py-2 rounded-xl flex-row items-center active:scale-95"
+          >
+            {deleting ? (
+              <ActivityIndicator size="small" color="#020617" />
+            ) : (
+              <>
+                <Ionicons name="trash-outline" size={16} color="#020617" />
+                <Text className="text-black font-semibold ml-2">Delete</Text>
+              </>
             )}
+          </TouchableOpacity>
         </View>
 
-        {/* Exercise list */}
-     <View className="p-6 gap-4">
-          {workout.exercises?.map((exerciseData, index) => (
+        {/* Date */}
+        <View className="flex-row items-center mb-3">
+          <Ionicons name="calendar-outline" size={18} color="#94A3B8" />
+          <Text className="text-slate-300 ml-3">
+            {formatDate(workout.date)} • {formatTime(workout.date)}
+          </Text>
+        </View>
+
+        {/* Duration */}
+        <View className="flex-row items-center mb-3">
+          <Ionicons name="time-outline" size={18} color="#94A3B8" />
+          <Text className="text-slate-300 ml-3">
+            {formatWorkoutDuration(workout.duration)}
+          </Text>
+        </View>
+
+        {/* Stats */}
+        <View className="flex-row items-center gap-3 mt-2">
+          <View className="bg-slate-900 px-3 py-2 rounded-lg">
+            <Text className="text-slate-300 text-sm">
+              {workout.exercises?.length ?? 0} exercises
+            </Text>
+          </View>
+
+          <View className="bg-slate-900 px-3 py-2 rounded-lg">
+            <Text className="text-slate-300 text-sm">
+              {getTotalSets()} sets
+            </Text>
+          </View>
+
+          {volume > 0 && (
+            <View className="bg-slate-900 px-3 py-2 rounded-lg">
+              <Text className="text-slate-300 text-sm">
+                {volume.toLocaleString()} {unit}
+              </Text>
+            </View>
+          )}
+        </View>
+      </View>
+
+      {/* 🔥 EXERCISES */}
+      <View className="px-4 py-5 gap-4">
+        {workout.exercises?.map((exerciseData, index) => {
+          const exerciseVolume =
+            exerciseData.sets?.reduce(
+              (total, s) => total + (s.weight || 0) * (s.reps || 0),
+              0
+            ) ?? 0;
+
+          return (
             <View
               key={exerciseData._key}
-              className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+              className="bg-slate-900 rounded-2xl p-5 border border-slate-800"
             >
+              {/* Exercise Header */}
               <View className="flex-row items-center justify-between mb-4">
                 <View className="flex-1">
-                  <Text className="text-lg font-bold text-gray-900">
+                  <Text className="text-white font-semibold text-lg">
                     {exerciseData.exercise?.name || "Unknown Exercise"}
                   </Text>
-                  <Text className="text-gray-600 text-sm mt-1">
-                    {exerciseData.sets?.length || 0} sets completed
+
+                  <Text className="text-slate-400 text-sm mt-1">
+                    {exerciseData.sets?.length ?? 0} sets
                   </Text>
                 </View>
 
-                <View className="bg-blue-100 rounded-full w-10 h-10 items-center justify-center">
-                  <Text className="text-blue-600 font-bold">{index + 1}</Text>
+                <View className="bg-slate-800 w-9 h-9 rounded-full items-center justify-center">
+                  <Text className="text-slate-300 font-semibold">
+                    {index + 1}
+                  </Text>
                 </View>
               </View>
 
-              <Text className="text-sm font-medium text-gray-700 mb-2">Sets:</Text>
-
+              {/* Sets */}
               <View className="gap-2">
                 {exerciseData.sets?.map((set, setIndex) => (
                   <View
                     key={set._key}
-                    className="bg-gray-50 rounded-lg p-3 flex-row items-center justify-between"
+                    className="bg-slate-800 rounded-xl px-4 py-3 flex-row items-center justify-between"
                   >
+                    {/* Left */}
                     <View className="flex-row items-center">
-                      <View className="bg-gray-200 rounded-full w-6 h-6 items-center justify-center mr-3">
-                        <Text className="text-gray-700 text-xs font-medium">{setIndex + 1}</Text>
+                      <View className="bg-slate-700 w-7 h-7 rounded-full items-center justify-center mr-3">
+                        <Text className="text-xs text-slate-300">
+                          {setIndex + 1}
+                        </Text>
                       </View>
-                      <Text className="text-gray-900 font-medium">{set.reps ?? 0} reps</Text>
+
+                      <Text className="text-white font-medium">
+                        {set.reps ?? 0} reps
+                      </Text>
                     </View>
 
+                    {/* Right */}
                     {!!set.weight && (
                       <View className="flex-row items-center">
-                        <Ionicons name="barbell-outline" size={16} color="#6B7280" />
-                        <Text className="text-gray-700 ml-2 font-medium">
+                        <Ionicons
+                          name="barbell-outline"
+                          size={16}
+                          color="#94A3B8"
+                        />
+                        <Text className="text-slate-300 ml-2">
                           {set.weight} {set.weightUnit || "lbs"}
                         </Text>
                       </View>
@@ -332,23 +357,24 @@ const deleteWorkout = async () => {
                 ))}
               </View>
 
-              {exerciseData.sets && exerciseData.sets.length > 0 && (
-                <View className="mt-4 pt-4 border-t border-gray-100">
-                  <View className="flex-row items-center justify-between">
-                    <Text className="text-sm text-gray-600">Exercise Volume:</Text>
-                    <Text className="text-sm font-medium text-gray-900">
-                      {exerciseData.sets
-                        .reduce((total, s) => total + (s.weight || 0) * (s.reps || 0), 0)
-                        .toLocaleString()}{" "}
-                      {exerciseData.sets[0]?.weightUnit || "lbs"}
-                    </Text>
-                  </View>
+              {/* Volume */}
+              {exerciseVolume > 0 && (
+                <View className="mt-4 pt-4 border-t border-slate-800 flex-row justify-between">
+                  <Text className="text-slate-400 text-sm">
+                    Exercise Volume
+                  </Text>
+
+                  <Text className="text-white font-medium text-sm">
+                    {exerciseVolume.toLocaleString()}{" "}
+                    {exerciseData.sets?.[0]?.weightUnit || "lbs"}
+                  </Text>
                 </View>
               )}
             </View>
-          ))}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
+          );
+        })}
+      </View>
+    </ScrollView>
+  </SafeAreaView>
+);
 }

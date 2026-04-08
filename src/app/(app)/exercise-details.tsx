@@ -15,7 +15,7 @@ import Markdown from "react-native-markdown-display";
 import { client } from "../../lib/sanity";
 import type { Exercise } from "../../lib/sanity/types.js";
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL?.replace(/\/$/, "") ?? "";
 
 
 export default function ExerciseDetail() {
@@ -118,8 +118,8 @@ export default function ExerciseDetail() {
       <View className="absolute top-12 left-0 right-0 z-10 px-4">
         <TouchableOpacity
           onPress={() => router.back()}
-          className="w-10 h-10 bg-black/30 rounded-full items-center justify-center"
-          activeOpacity={0.85}
+          className="w-10 h-10 bg-black/30 rounded-full items-center justify-center active:scale-95"
+          activeOpacity={0.8}
         >
           <Ionicons name="close" size={24} color="white" />
         </TouchableOpacity>
@@ -287,7 +287,7 @@ export default function ExerciseDetail() {
           <View className="mt-8 gap-2">
             {/* AI Coach button */}
             <TouchableOpacity
-              className={`rounded-xl py-4 items-center justify-center ${aiLoading
+              className={`rounded-xl py-4 items-center justify-center active:scale-95 ${aiLoading
                 ? "bg-gray-400"
                 : aiGuidance
                   ? "bg-green-500"
@@ -295,6 +295,7 @@ export default function ExerciseDetail() {
                 }`}
               onPress={getAiGuidance}
               disabled={aiLoading}
+              activeOpacity={0.8}
             >
               {aiLoading ? (
                 <View className="flex-row items-center">
@@ -313,8 +314,9 @@ export default function ExerciseDetail() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              className="bg-gray-200 rounded-xl py-4 items-center"
+              className="bg-gray-200 rounded-xl py-4 items-center active:scale-95"
               onPress={() => router.back()}
+              activeOpacity={0.8}
             >
               <Text className="text-gray-800 font-bold text-lg">Close</Text>
             </TouchableOpacity>

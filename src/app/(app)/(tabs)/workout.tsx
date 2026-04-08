@@ -55,8 +55,8 @@ function Workout() {
 
         {/* Start Button */}
         <TouchableOpacity
-          onPress={startWorkout}className="bg-blue-600 rounded-2xl py-4 items-center active:bg-blue-700"
-          
+          onPress={startWorkout}
+          className="bg-blue-600 rounded-2xl py-4 items-center active:bg-blue-700 active:scale-95"
           activeOpacity={0.8}
         >
           <View className="flex-row items-center">

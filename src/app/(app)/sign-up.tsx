@@ -135,7 +135,7 @@ export default function SignUpScreen() {
                 <TouchableOpacity
                   onPress={onVerifyPress}
                   disabled={isLoading}
-                  className={`rounded-xl py-4 shadow-sm mb-4 ${isLoading ? "bg-gray-400" : "bg-green-600"}`}
+                  className={`rounded-xl py-4 shadow-sm mb-4 active:scale-95 ${isLoading ? "bg-gray-400" : "bg-green-600"}`}
                   activeOpacity={0.8}
                 >
                   <View className='flex-row items-center justify-center'>
@@ -156,7 +156,7 @@ export default function SignUpScreen() {
 
 
                 {/* Resend Code */}
-                <TouchableOpacity className='py-2'>
+                <TouchableOpacity activeOpacity={0.8} className='py-2 active:scale-95'>
                   <Text className='text-blue-600 font-medium text-center'>
                     Didn't recieve the code? Resend
                   </Text>
@@ -253,7 +253,7 @@ export default function SignUpScreen() {
               <TouchableOpacity
                 onPress={onSignUpPress}
                 disabled={isLoading}
-                className={`rounded-xl py-4 shadow-sm mb-4 ${isLoading ? 'bg-gray-400' : 'bg-blue-600'}`}
+                className={`rounded-xl py-4 shadow-sm mb-4 active:scale-95 ${isLoading ? 'bg-gray-400' : 'bg-blue-600'}`}
                 activeOpacity={0.8}
               >
                 <View className="flex-row items-center justify-center">
@@ -278,7 +278,7 @@ export default function SignUpScreen() {
             <View className='flex-row justify-center items-center mt-4'>
               <Text className='text-gray-600'>Already hava an account?</Text>
               <Link href="/sign-in" asChild>
-                <TouchableOpacity>
+                <TouchableOpacity activeOpacity={0.8} className="active:scale-95">
                   <Text className='text-blue-600 font-semibold'>Sign In`</Text>
                 </TouchableOpacity>
               </Link>

@@ -11,13 +11,22 @@ import {
   ScrollView,
   ActivityIndicator,
   TextInput,
+  LayoutAnimation,
+  UIManager,
+  Modal,
 } from "react-native";
 import { useStopwatch } from "react-timer-hook";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@clerk/clerk-expo";
 import { useWorkoutStore } from "@/store/workout-store";
+import { showSuccess, showError } from "@/lib/toast";
 import ExerciseSelectionModal from "./components/ExerciseSelectionModal";
+
+if (Platform.OS === "android") {
+  UIManager.setLayoutAnimationEnabledExperimental?.(true);
+}
+
 const BACKEND_URL =
   process.env.EXPO_PUBLIC_BACKEND_URL?.replace(/\/$/, "") ?? "";
 
@@ -25,6 +34,7 @@ export default function ActiveWorkout() {
   const { userId, isLoaded } = useAuth();
   const [showExerciseSelection, setShowExerciseSelection] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
 
   // ✅ subscribe only to what you need
   const workoutExercises = useWorkoutStore((s) => s.workoutExercises);
@@ -48,6 +58,17 @@ export default function ActiveWorkout() {
   // ✅ new: actions
   const addNewSet = useWorkoutStore((s) => s.addNewSet);
   const setWorkoutExercises = useWorkoutStore((s) => s.setWorkoutExercises);
+  const completeWorkout = useWorkoutStore((s) => s.completeWorkout);
+
+  const handleAddNewSet = (exerciseId: string) => {
+    LayoutAnimation.configureNext({
+      duration: 250,
+      create: { type: "easeInEaseOut", property: "opacity" },
+      update: { type: "easeInEaseOut" },
+      delete: { type: "easeInEaseOut", property: "opacity" },
+    });
+    addNewSet(exerciseId);
+  };
 
   const deleteExercise = (exerciseId: string) => {
     console.log("deleteExercise called with", exerciseId);
@@ -56,7 +77,14 @@ export default function ActiveWorkout() {
       const shouldDelete = window.confirm("Remove this exercise?");
       if (shouldDelete) {
         console.log("web confirm true, calling removeExercise");
+        LayoutAnimation.configureNext({
+          duration: 250,
+          create: { type: "easeInEaseOut", property: "opacity" },
+          update: { type: "easeInEaseOut" },
+          delete: { type: "easeInEaseOut", property: "opacity" },
+        });
         removeExercise(exerciseId);
+        showSuccess("Exercise removed", "Removed from workout");
       } else {
         console.log("web confirm false, cancelling");
       }
@@ -70,7 +98,14 @@ export default function ActiveWorkout() {
         style: "destructive",
         onPress: () => {
           console.log("Remove pressed, calling removeExercise");
+          LayoutAnimation.configureNext({
+            duration: 250,
+            create: { type: "easeInEaseOut", property: "opacity" },
+            update: { type: "easeInEaseOut" },
+            delete: { type: "easeInEaseOut", property: "opacity" },
+          });
           removeExercise(exerciseId);
+          showSuccess("Exercise removed", "Removed from workout");
         },
       },
     ]);
@@ -86,24 +121,30 @@ export default function ActiveWorkout() {
       exercises.map((exercise) =>
         exercise.id === exerciseId
           ? {
-              ...exercise,
-              sets: exercise.sets.map((set) =>
-                set.id === setId ? { ...set, [field]: value } : set
-              ),
-            }
+            ...exercise,
+            sets: exercise.sets.map((set) =>
+              set.id === setId ? { ...set, [field]: value } : set
+            ),
+          }
           : exercise
       )
     );
   };
 
   const deleteSet = (exerciseId: string, setId: string) => {
+    LayoutAnimation.configureNext({
+      duration: 250,
+      create: { type: "easeInEaseOut", property: "opacity" },
+      update: { type: "easeInEaseOut" },
+      delete: { type: "easeInEaseOut", property: "opacity" },
+    });
     setWorkoutExercises((exercises) =>
       exercises.map((exercise) =>
         exercise.id === exerciseId
           ? {
-              ...exercise,
-              sets: exercise.sets.filter((set) => set.id !== setId),
-            }
+            ...exercise,
+            sets: exercise.sets.filter((set) => set.id !== setId),
+          }
           : exercise
       )
     );
@@ -114,13 +155,13 @@ export default function ActiveWorkout() {
       exercises.map((exercise) =>
         exercise.id === exerciseId
           ? {
-              ...exercise,
-              sets: exercise.sets.map((set) =>
-                set.id === setId
-                  ? { ...set, isCompleted: !set.isCompleted }
-                  : set
-              ),
-            }
+            ...exercise,
+            sets: exercise.sets.map((set) =>
+              set.id === setId
+                ? { ...set, isCompleted: !set.isCompleted }
+                : set
+            ),
+          }
           : exercise
       )
     );
@@ -164,29 +205,15 @@ export default function ActiveWorkout() {
   };
 
   const saveWorkout = () => {
-    if (Platform.OS === "web") {
-      const confirmed = window.confirm(
-        "Are you sure you want to complete the workout? You won't be able to edit it afterwards."
-      );
-      if (confirmed) endWorkout();
-      return;
-    }
-
-    Alert.alert(
-      "Complete Workout",
-      "Are you sure you want to complete the workout? You won't be able to edit it afterwards.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Complete", onPress: async () => await endWorkout() },
-      ]
-    );
+    if (workoutExercises.length === 0) return;
+    setShowSummary(true);
   };
 
   const endWorkout = async () => {
     const saved = await saveWorkoutToDatabase();
 
     if (saved) {
-      Alert.alert("Workout Saved", "Your workout has been saved successfully.");
+      showSuccess("Workout complete 🎉", "Great job!");
       //Reset workout and navigate back
       resetWorkout();
       router.replace("/(app)/(tabs)/history?refresh=true");
@@ -312,18 +339,26 @@ export default function ActiveWorkout() {
     );
   };
 
+    // Calculate total sets in the workout
   const totalSets = workoutExercises.reduce((total, exercise) => {
     return total + exercise.sets.length;
   }, 0);
 
+  // Calculate total completed sets
   const completedSets = workoutExercises.reduce((total, exercise) => {
     return total + exercise.sets.filter((set) => set.isCompleted).length;
   }, 0);
 
+    // Calculate progress percentage for the progress bar
   const progressPercent =
     totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
 
+      // Show exercise selection modal
   const addExercise = () => setShowExerciseSelection(true);
+
+    // Total exercises count for summary
+  const totalExercises = workoutExercises.length;
+
 
   return (
     <SafeAreaView className="flex-1 bg-slate-950">
@@ -344,9 +379,9 @@ export default function ActiveWorkout() {
             <View className="flex-row bg-slate-800 rounded-xl overflow-hidden">
               <TouchableOpacity
                 onPress={() => setWeightUnit("lbs")}
-                className={`px-3 py-1 ${
-                  weightUnit === "lbs" ? "bg-green-500" : ""
-                }`}
+                activeOpacity={0.8}
+                className={`px-3 py-1 active:scale-95 ${weightUnit === "lbs" ? "bg-green-500" : ""
+                  }`}
               >
                 <Text
                   className={
@@ -359,9 +394,9 @@ export default function ActiveWorkout() {
 
               <TouchableOpacity
                 onPress={() => setWeightUnit("kg")}
-                className={`px-3 py-1 ${
-                  weightUnit === "kg" ? "bg-green-500" : ""
-                }`}
+                activeOpacity={0.8}
+                className={`px-3 py-1 active:scale-95 ${weightUnit === "kg" ? "bg-green-500" : ""
+                  }`}
               >
                 <Text
                   className={
@@ -376,7 +411,8 @@ export default function ActiveWorkout() {
             {/* END */}
             <TouchableOpacity
               onPress={cancelWorkout}
-              className="bg-red-500 px-3 py-2 rounded-xl"
+              activeOpacity={0.8}
+              className="bg-red-500 px-3 py-2 rounded-xl active:scale-95"
             >
               <Text className="text-white text-xs font-semibold">End</Text>
             </TouchableOpacity>
@@ -445,7 +481,11 @@ export default function ActiveWorkout() {
                   {exercise.name}
                 </Text>
 
-                <TouchableOpacity onPress={() => deleteExercise(exercise.id)}>
+                <TouchableOpacity
+                  onPress={() => deleteExercise(exercise.id)}
+                  activeOpacity={0.8}
+                  className="active:scale-95"
+                >
                   <Ionicons name="trash-outline" size={18} color="#64748B" />
                 </TouchableOpacity>
               </View>
@@ -468,19 +508,17 @@ export default function ActiveWorkout() {
                   exercise.sets.map((set, index) => (
                     <View
                       key={set.id}
-                      className={`mb-3 rounded-2xl p-3 border ${
-                        set.isCompleted
+                      className={`mb-3 rounded-2xl p-3 border ${set.isCompleted
                           ? "bg-green-500/15 border-green-500/30"
                           : "bg-slate-800 border-slate-700"
-                      }`}
+                        }`}
                     >
                       {/* 🔝 TOP ROW */}
                       <View className="flex-row items-end">
                         {/* 🔢 SET NUMBER */}
                         <View
-                          className={`h-10 w-10 rounded-xl items-center justify-center mr-3 ${
-                            set.isCompleted ? "bg-green-500" : "bg-slate-700"
-                          }`}
+                          className={`h-10 w-10 rounded-xl items-center justify-center mr-3 ${set.isCompleted ? "bg-green-500" : "bg-slate-700"
+                            }`}
                         >
                           <Text
                             className={
@@ -507,11 +545,10 @@ export default function ActiveWorkout() {
                             placeholderTextColor="#64748B"
                             keyboardType="numeric"
                             editable={!set.isCompleted}
-                            className={`rounded-xl px-3 py-3 text-center ${
-                              set.isCompleted
+                            className={`rounded-xl px-3 py-3 text-center ${set.isCompleted
                                 ? "bg-slate-700 text-slate-400"
                                 : "bg-slate-900 text-white border border-slate-600"
-                            }`}
+                              }`}
                           />
                         </View>
 
@@ -529,11 +566,10 @@ export default function ActiveWorkout() {
                             placeholderTextColor="#64748B"
                             keyboardType="numeric"
                             editable={!set.isCompleted}
-                            className={`rounded-xl px-3 py-3 text-center ${
-                              set.isCompleted
+                            className={`rounded-xl px-3 py-3 text-center ${set.isCompleted
                                 ? "bg-slate-700 text-slate-400"
                                 : "bg-slate-900 text-white border border-slate-600"
-                            }`}
+                              }`}
                           />
                         </View>
 
@@ -549,13 +585,13 @@ export default function ActiveWorkout() {
                       <View className="flex-row justify-end mt-3">
                         {/* ✅ COMPLETE SET BUTTON */}
                         <TouchableOpacity
-                          onPress={() =>
-                            toggleSetCompletion(exercise.id, set.id)
-                          }
-                          className={`h-11 w-11 rounded-xl items-center justify-center mr-2 ${
-                            set.isCompleted ? "bg-green-500" : "bg-slate-700"
-                          }`}
-                          activeOpacity={0.85}
+                          onPress={() => {
+                            if (!set.isCompleted) showSuccess("Set completed ✅");
+                            toggleSetCompletion(exercise.id, set.id);
+                          }}
+                          className={`h-11 w-11 rounded-xl items-center justify-center mr-2 active:scale-95 ${set.isCompleted ? "bg-green-500" : "bg-slate-700"
+                            }`}
+                          activeOpacity={0.8}
                         >
                           <Ionicons
                             name={
@@ -571,8 +607,8 @@ export default function ActiveWorkout() {
                         {/* 🗑 DELETE SET BUTTON */}
                         <TouchableOpacity
                           onPress={() => deleteSet(exercise.id, set.id)}
-                          className="h-11 w-11 rounded-xl items-center justify-center bg-red-500/90"
-                          activeOpacity={0.85}
+                          className="h-11 w-11 rounded-xl items-center justify-center bg-red-500/90 active:scale-95"
+                          activeOpacity={0.8}
                         >
                           <Ionicons name="trash" size={16} color="white" />
                         </TouchableOpacity>
@@ -584,8 +620,9 @@ export default function ActiveWorkout() {
 
               {/* ADD SET */}
               <TouchableOpacity
-                onPress={() => addNewSet(exercise.id)}
-                className="mt-4 border border-dashed border-slate-600 py-3 rounded-xl items-center active:opacity-80"
+                onPress={() => handleAddNewSet(exercise.id)}
+                activeOpacity={0.8}
+                className="mt-4 border border-dashed border-slate-600 py-3 rounded-xl items-center active:scale-95"
               >
                 <Text className="text-green-500 font-semibold">+ Add Set</Text>
               </TouchableOpacity>
@@ -602,16 +639,17 @@ export default function ActiveWorkout() {
         {/* ADD EXERCISE */}
         <TouchableOpacity
           onPress={addExercise}
-          className="bg-slate-800 rounded-2xl py-4 items-center mb-3"
+          activeOpacity={0.8}
+          className="bg-slate-800 rounded-2xl py-4 items-center mb-3 active:scale-95"
         >
           <Text className="text-white font-semibold">+ Add Exercise</Text>
         </TouchableOpacity>
         {/* COMPLETE WORKOUT */}
         <TouchableOpacity
           onPress={saveWorkout}
-          className={`rounded-2xl py-4 items-center ${
-            canCompleteWorkout ? "bg-green-500" : "bg-gray-600"
-          }`}
+          activeOpacity={0.8}
+          className={`rounded-2xl py-4 items-center active:scale-95 ${canCompleteWorkout ? "bg-green-500" : "bg-gray-600"
+            }`}
           disabled={!canCompleteWorkout}
         >
           <Text className="text-slate-950 font-bold">Complete Workout</Text>
@@ -621,6 +659,63 @@ export default function ActiveWorkout() {
         visible={showExerciseSelection}
         onClose={() => setShowExerciseSelection(false)}
       />
+
+      {/* 🎉 WORKOUT SUMMARY MODAL */}
+      <Modal visible={showSummary} transparent animationType="fade">
+        <View className="flex-1 bg-black/70 items-center justify-center px-6">
+          <View className="w-full bg-slate-900 rounded-3xl p-6 border border-slate-800">
+
+            {/* Title */}
+            <Text className="text-2xl font-bold text-white text-center mb-6">
+              🎉 Workout Complete
+            </Text>
+
+            {/* Stats */}
+            <View className="bg-slate-800 rounded-2xl p-4 mb-6 gap-3">
+              <View className="flex-row justify-between items-center">
+                <Text className="text-slate-400 text-sm">Exercises</Text>
+                <Text className="text-white font-semibold">{totalExercises}</Text>
+              </View>
+              <View className="h-px bg-slate-700" />
+              <View className="flex-row justify-between items-center">
+                <Text className="text-slate-400 text-sm">Sets Completed</Text>
+                <Text className="text-white font-semibold">
+                  {completedSets} / {totalSets}
+                </Text>
+              </View>
+              <View className="h-px bg-slate-700" />
+              <View className="flex-row justify-between items-center">
+                <Text className="text-slate-400 text-sm">Duration</Text>
+                <Text className="text-white font-semibold">{getWorkoutDuration()}</Text>
+              </View>
+            </View>
+
+            {/* CTA Buttons */}
+            <View className="gap-3">
+              <TouchableOpacity
+                onPress={async () => {
+                  setShowSummary(false);
+                  completeWorkout(totalSeconds);
+                  await endWorkout();
+                }}
+                activeOpacity={0.8}
+                className="bg-green-500 py-4 rounded-2xl items-center active:scale-95"
+              >
+                <Text className="text-slate-900 font-bold text-base">Save Workout</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => setShowSummary(false)}
+                activeOpacity={0.8}
+                className="bg-slate-800 py-4 rounded-2xl items-center active:scale-95"
+              >
+                <Text className="text-slate-300 font-medium">Go Back</Text>
+              </TouchableOpacity>
+            </View>
+
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

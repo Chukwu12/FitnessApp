@@ -9,11 +9,19 @@ import {
   FlatList,
   RefreshControl,
   ActivityIndicator,
+  LayoutAnimation,
+  Platform,
+  UIManager,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
+if (Platform.OS === "android") {
+  UIManager.setLayoutAnimationEnabledExperimental?.(true);
+}
+
 import { useWorkoutStore } from "@/store/workout-store";
+import { showSuccess } from "@/lib/toast";
 import ExerciseCard from "./ExerciseCard";
 
 // ✅ Use the Sanity client that works in your project.
@@ -105,10 +113,19 @@ export default function ExerciseSelectionModal({
     // ✅ show instant visual feedback
     setSelectedExerciseId(exercise?._id ?? null);
 
+    LayoutAnimation.configureNext({
+      duration: 250,
+      create: { type: "easeInEaseOut", property: "opacity" },
+      update: { type: "easeInEaseOut" },
+      delete: { type: "easeInEaseOut", property: "opacity" },
+    });
+
     addExerciseToWorkout({
       name: exercise?.name ?? "Exercise",
       sanityId: exercise?._id,
     });
+
+    showSuccess("Exercise added 💪", exercise?.name ?? "Exercise");
 
     // ✅ close modal after a very short delay so user sees the feedback
     setTimeout(() => {
@@ -142,7 +159,8 @@ export default function ExerciseSelectionModal({
 
             <TouchableOpacity
               onPress={onClose}
-              className="w-8 h-8 items-center justify-center"
+              activeOpacity={0.8}
+              className="w-8 h-8 items-center justify-center active:scale-95"
             >
               <Ionicons name="close" size={24} color="#94A3B8" />
             </TouchableOpacity>
@@ -166,7 +184,11 @@ export default function ExerciseSelectionModal({
               returnKeyType="search"
             />
             {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery("")}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                className="active:scale-95"
+                onPress={() => setSearchQuery("")}
+              >
                 <Ionicons name="close-circle" size={20} color="#94A3B8" />
               </TouchableOpacity>
             )}
@@ -176,10 +198,10 @@ export default function ExerciseSelectionModal({
         {/* List */}
         <FlatList
           data={filteredExercises}
-          keyExtractor={(item: any) => item._id}
+          keyExtractor={(item: Exercise) => item._id}
           numColumns={2}
           columnWrapperStyle={{ gap: 12, paddingHorizontal: 16 }}
-          renderItem={({ item }: any) => (
+          renderItem={({ item }: { item: Exercise }) => (
             <View style={{ flex: 1 }}>
               <ExerciseCard
                 item={item}

@@ -52,7 +52,7 @@ export default function ProfilePage() {
       <View className="px-6 mb-8">
         <TouchableOpacity
           onPress={handleSignOut}
-          className="bg-red-600 rounded-2xl p-4"
+          className="bg-red-600 rounded-2xl p-4 active:scale-95"
           disabled={isSigningOut}
           activeOpacity={0.8}
         >

@@ -151,7 +151,7 @@ function TodayWorkoutCard({
       </View>
 
       {/* ▶️ START BUTTON */}
-      <TouchableOpacity className="bg-slate-950 rounded-2xl py-4 items-center mt-5 active:opacity-90">
+      <TouchableOpacity activeOpacity={0.8} className="bg-slate-950 rounded-2xl py-4 items-center mt-5 active:scale-95">
         <Text className="text-white font-semibold text-base">
           Start Workout
         </Text>
@@ -262,7 +262,7 @@ function ContinueWorkoutCard({ hasActiveWorkout }: { hasActiveWorkout: boolean }
       )}
 
       {/* ▶️ PRIMARY BUTTON */}
-      <TouchableOpacity className="bg-green-500 rounded-2xl py-4 items-center mt-5 active:opacity-90">
+      <TouchableOpacity activeOpacity={0.8} className="bg-green-500 rounded-2xl py-4 items-center mt-5 active:scale-95">
         <Text className="text-slate-950 font-bold text-base">
           {hasActiveWorkout ? "Resume Session" : "Create Workout"}
         </Text>

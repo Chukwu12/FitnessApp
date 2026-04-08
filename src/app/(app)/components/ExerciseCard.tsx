@@ -1,21 +1,12 @@
-import React, { useMemo } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import React, { useMemo, useEffect, useRef } from "react";
+import { View, Text, TouchableOpacity, Animated } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
-// import type { Exercise } from "@/lib/sanity/types";
-
-type Exercise = {
-  _id: string;
-  name: string;
-  difficulty?: string;
-  exerciseId?: string;
-  gifUrl?: string;
-  target: string;
-  equipment: string;
-};
+import type { Exercise } from "@/lib/sanity/types";
 
 interface ExerciseCardProps {
   item: Exercise;
+  index?: number; // ✅ optional index for better key management in lists
   onPress: () => void;
   showChevron?: boolean;
   // ✅ optional delete support
@@ -79,6 +70,24 @@ function ExerciseCardBase({
     [imageUri]
   );
 
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+const translateY = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, translateY]);
+
   return (
     <View className="flex-1 bg-slate-900 rounded-3xl mb-4 border border-slate-800 p-4 relative">
       {isSelected && (
@@ -89,9 +98,9 @@ function ExerciseCardBase({
       {/* ✅ Top row: pressable content + separate delete button */}
       <View className="flex-row items-start">
         <TouchableOpacity
-          className="flex-1 active:opacity-90 active:scale-[0.98]"
+          className="flex-1 active:scale-95"
           onPress={onPress}
-          activeOpacity={0.85}
+          activeOpacity={0.8}
         >
           {imageSource ? (
             <View className="w-full h-[120px] rounded-2xl overflow-hidden mb-3 bg-slate-800/60 items-center justify-center">
@@ -111,7 +120,7 @@ function ExerciseCardBase({
             className="text-lg font-semibold text-white mt-1"
             numberOfLines={2}
           >
-            {formatName(item.name)}
+            {formatName(item.name ?? "Exercise")}
           </Text>
 
           <Text className="text-slate-400 text-sm mt-1">
@@ -142,7 +151,7 @@ function ExerciseCardBase({
             onPress={onDelete}
             activeOpacity={0.8}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            className="ml-3 w-10 h-10 rounded-xl items-center justify-center bg-slate-800 border border-slate-700"
+            className="ml-3 w-10 h-10 rounded-xl items-center justify-center bg-slate-800 border border-slate-700 active:scale-95"
           >
             <Text className="text-slate-400 text-base">🗑️</Text>
           </TouchableOpacity>
