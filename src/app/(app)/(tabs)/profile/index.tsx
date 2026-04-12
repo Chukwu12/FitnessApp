@@ -46,24 +46,80 @@ export default function ProfilePage() {
   };
 
   return (
-    <SafeAreaView className="flex-1">
-      <Text>Profile</Text>
+  <SafeAreaView className="flex-1 bg-slate-950">
 
-      <View className="px-6 mb-8">
+    {/* HEADER */}
+    <View className="px-6 pt-6 pb-4 border-b border-slate-800">
+      <Text className="text-2xl font-bold text-white">
+        Profile
+      </Text>
+      <Text className="text-slate-400 mt-1">
+        Manage your account & activity
+      </Text>
+    </View>
+
+    <View className="flex-1 px-6 pt-6">
+
+      {/* USER CARD */}
+      <View className="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-6">
+        <View className="flex-row items-center justify-between">
+          <View>
+            <Text className="text-white text-lg font-bold">
+              Welcome Back 👋
+            </Text>
+
+            <Text className="text-slate-400 mt-1">
+              Ready for your next workout?
+            </Text>
+          </View>
+
+          <View className="bg-green-500/20 p-3 rounded-full">
+            <Ionicons name="person" size={22} color="#22C55E" />
+          </View>
+        </View>
+      </View>
+
+      {/* STATS PLACEHOLDER (we’ll connect later to Sanity/history) */}
+      <View className="flex-row gap-3 mb-6">
+
+        <View className="flex-1 bg-slate-900 border border-slate-800 rounded-2xl p-4">
+          <Text className="text-slate-400 text-xs">Workouts</Text>
+          <Text className="text-white text-xl font-bold mt-1">
+            --
+          </Text>
+        </View>
+
+        <View className="flex-1 bg-slate-900 border border-slate-800 rounded-2xl p-4">
+          <Text className="text-slate-400 text-xs">Streak</Text>
+          <Text className="text-white text-xl font-bold mt-1">
+            --
+          </Text>
+        </View>
+
+      </View>
+
+      {/* ACTION CARD */}
+      <View className="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-6">
+        <Text className="text-white font-semibold mb-3">
+          Account
+        </Text>
+
         <TouchableOpacity
           onPress={handleSignOut}
-          className="bg-red-600 rounded-2xl p-4 active:scale-95"
           disabled={isSigningOut}
           activeOpacity={0.8}
+          className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 active:scale-95"
         >
           <View className="flex-row items-center justify-center">
-            <Ionicons name="log-out-outline" size={20} color="white" />
-            <Text className="text-white font-semibold text-lg ml-2">
+            <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+            <Text className="text-red-400 font-semibold text-lg ml-2">
               {isSigningOut ? "Signing Out..." : "Sign Out"}
             </Text>
           </View>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
-  );
+
+    </View>
+  </SafeAreaView>
+);
 }

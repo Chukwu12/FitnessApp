@@ -1,15 +1,71 @@
 import React from "react";
 import { SafeAreaView, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import AntDesign from "@expo/vector-icons/AntDesign";
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useEffect, useMemo, useState } from "react";
+import { useUser } from "@clerk/clerk-expo";
+import { client } from "@/lib/sanity/client";
+import { defineQuery } from "groq";
 
 // ⚠️ NOTE: This top LinearGradient is currently unused — you should REMOVE it
 // because it’s not wrapped around any component.
 // We'll properly use it inside TodayWorkoutCard later.
 
+const getWorkoutsQuery = defineQuery(`
+*[_type == "workout" && userId == $userId]
+| order(date desc) {
+  _id,
+  date,
+  duration,
+  exercises[] {
+    _key,
+    exercise->{
+      name
+    }
+  }
+}
+`);
+
+type Workout = {
+  _id: string;
+  date?: string;
+  duration?: number;
+  exercises?: {
+    exercise?: {
+      name?: string;
+    };
+  }[];
+};
+
 export default function Page() {
   // 👤 USER DATA (replace with real data later)
   const userName = "Okey";
+
+  // 🏋️ WORKOUT HISTORY 
+  const { user } = useUser();
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [loading, setLoading] = useState(true);
+
+
+  useEffect(() => {
+    const fetchWorkouts = async () => {
+      if (!user?.id) return;
+
+      try {
+        const data = await client.fetch<Workout[]>(getWorkoutsQuery, {
+          userId: user.id,
+        });
+
+        setWorkouts(data);
+      } catch (err) {
+        console.error("Error fetching workouts:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWorkouts();
+  }, [user?.id]);
 
   // 🏋️ TODAY'S WORKOUT DATA
   const todayWorkout = {
@@ -21,19 +77,95 @@ export default function Page() {
   // ▶️ CHECK IF USER HAS ACTIVE WORKOUT
   const hasActiveWorkout = true;
 
+
+  // 🧮 CALCULATE TOTAL WORKOUTS (for stats)  
+  const totalWorkouts = workouts.length;
+
+  // 🧮 CALCULATE TOTAL MINUTES (for stats)
+  const totalMinutes = useMemo(() => {
+    return Math.round(
+      workouts.reduce((sum, w) => sum + (w.duration ?? 0), 0) / 60
+    );
+  }, [workouts]);
+
+
+  const getStreak = (workouts: any[]) => {
+    if (!workouts.length) return 0;
+
+    // get unique workout dates
+    const workoutDays = new Set(
+      workouts.map((w) =>
+        new Date(w.date).toDateString()
+      )
+    );
+
+    // check backwards from today to see how many consecutive days have workouts
+    let streak = 0;
+    const today = new Date();
+
+    for (let i = 0; i < 365; i++) {
+      const d = new Date();
+      d.setDate(today.getDate() - i);
+
+      const key = d.toDateString();
+
+      if (workoutDays.has(key)) {
+        streak++;
+      } else {
+        break; // streak broken
+      }
+    }
+
+    return streak;
+  };
+
+
+  // 🧮 CALCULATE CURRENT STREAK (for stats)
+  const streak = useMemo(() => getStreak(workouts), [workouts]);
+
   // 📊 STATS DATA (Section you're currently working on)
-  const stats = [
-  { label: "Workouts", value: "12", icon: "bars" as const },
-  { label: "Minutes", value: "320", icon: "clockcircleo" as const },
-  { label: "Streak", value: "5 days", icon: "star" as const },
-];
+  const stats = useMemo(
+    () => [
+      {
+        label: "Workouts",
+        value: String(totalWorkouts),
+        icon: "bar-chart-outline",
+      },
+      {
+        label: "Minutes",
+        value: String(totalMinutes),
+        icon: "time-outline",
+      },
+      {
+        label: "Streak",
+        value: `${streak} days`,
+        icon: "flame-outline",
+      },
+    ],
+    [totalWorkouts, totalMinutes, streak]
+  );
 
   // 🕘 RECENT ACTIVITY DATA
-  const recentActivity = [
-    { name: "Upper Body Blast", date: "Yesterday", duration: "42 min" },
-    { name: "Leg Day", date: "Mar 23", duration: "50 min" },
-    { name: "Core & Cardio", date: "Mar 21", duration: "30 min" },
-  ];
+  const recentActivity = useMemo(() => {
+  return workouts.slice(0, 3).map((w) => ({
+    name:
+      w.exercises?.[0]?.exercise?.name || "Workout Session",
+    date: new Date(w.date || "").toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    }),
+    duration: `${Math.round((w.duration ?? 0) / 60)} min`,
+  }));
+}, [workouts]);
+
+
+if (loading) {
+  return (
+    <SafeAreaView className="flex-1 bg-slate-950 items-center justify-center">
+      <Text className="text-white">Loading dashboard...</Text>
+    </SafeAreaView>
+  );
+}
 
   return (
     // 🧱 MAIN SCREEN CONTAINER
@@ -85,7 +217,7 @@ function HomeHeader({ userName }: { userName: string }) {
 
       {/* 👤 PROFILE ICON */}
       <View className="h-12 w-12 rounded-full bg-slate-800 items-center justify-center border border-slate-700">
-        <AntDesign name="user" size={20} color="#F8FAFC" />
+        <Ionicons name="person" size={20} color="#F8FAFC" />
       </View>
     </View>
   );
@@ -128,7 +260,7 @@ function TodayWorkoutCard({
           <View className="flex-row items-center mt-3">
             {/* DURATION */}
             <View className="flex-row items-center mr-4">
-              <AntDesign name="clockcircleo" size={14} color="#020617" />
+              <Ionicons name="time-outline" size={14} color="#020617" />
               <Text className="text-slate-950 ml-2 font-medium">
                 {workout.duration}
               </Text>
@@ -136,7 +268,7 @@ function TodayWorkoutCard({
 
             {/* EXERCISE COUNT */}
             <View className="flex-row items-center">
-              <AntDesign name="book" size={14} color="#020617" />
+              <Ionicons name="book-outline" size={14} color="#020617" />
               <Text className="text-slate-950 ml-2 font-medium">
                 {workout.exercises} exercises
               </Text>
@@ -146,7 +278,7 @@ function TodayWorkoutCard({
 
         {/* ▶️ PLAY ICON BOX */}
         <View className="h-14 w-14 rounded-2xl bg-white/20 items-center justify-center border border-white/20">
-          <AntDesign name="play" size={22} color="#020617" />
+          <Ionicons name="play" size={22} color="#020617" />
         </View>
       </View>
 
@@ -166,11 +298,11 @@ function TodayWorkoutCard({
 function QuickStatsRow({
   stats,
 }: {
-  stats: {
+  stats: ReadonlyArray<{
     label: string;
     value: string;
-    icon: keyof typeof AntDesign.glyphMap;
-  }[];
+    icon: "bar-chart-outline" | "time-outline" | "flame-outline";
+  }>;
 }) {
   return (
     <View className="mb-5">
@@ -187,10 +319,10 @@ function QuickStatsRow({
             key={stat.label}
 
             // 🎨 EACH STAT CARD
-            className="flex-1 bg-slate-900 border border-slate-700 rounded-2xl p-4 active:scale-95"
+            className="flex-1 bg-slate-900 border border-slate-800 rounded-2xl p-4 active:scale-95"
           >
             {/* 📊 ICON */}
-            <AntDesign name={stat.icon} size={18} color="#22C55E" />
+            <Ionicons name={stat.icon} size={18} color="#22C55E" />
 
             {/* 🔢 VALUE */}
             <Text className="text-white text-lg font-bold mt-3">
@@ -214,7 +346,7 @@ function QuickStatsRow({
 function ContinueWorkoutCard({ hasActiveWorkout }: { hasActiveWorkout: boolean }) {
   return (
     // 🎨 MAIN CARD CONTAINER
-    <View className="bg-slate-900 border border-slate-700 rounded-3xl p-5 mb-5">
+    <View className="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-5">
       {/* 🔝 TOP ROW */}
       <View className="flex-row items-start justify-between">
         {/* 📄 LEFT SIDE CONTENT */}
@@ -234,8 +366,8 @@ function ContinueWorkoutCard({ hasActiveWorkout }: { hasActiveWorkout: boolean }
 
         {/* ➡️ ACTION ICON BOX */}
         <View className="h-12 w-12 rounded-2xl bg-slate-800 border border-slate-700 items-center justify-center">
-          <AntDesign
-            name={hasActiveWorkout ? "arrowright" : "plus"}
+          <Ionicons
+            name={hasActiveWorkout ? "arrow-forward" : "add"}
             size={20}
             color="#22C55E"
           />
@@ -306,8 +438,8 @@ function RecentActivitySection({
             <View className="flex-row items-center flex-1 pr-3">
 
               {/* 📅 ICON BOX */}
-              <View className="h-12 w-12 rounded-2xl bg-slate-700 items-center justify-center mr-3">
-                <AntDesign name="calendar" size={18} color="#38BDF8" />
+              <View className="h-12 w-12 rounded-2xl bg-slate-800 items-center justify-center mr-3">
+                <Ionicons name="calendar" size={18} color="#38BDF8" />
               </View>
 
               {/* TEXT CONTENT */}
@@ -325,7 +457,7 @@ function RecentActivitySection({
             </View>
 
             {/* ➡️ RIGHT ARROW */}
-            <AntDesign name="right" size={16} color="#64748B" />
+            <Ionicons name="chevron-forward" size={16} color="#64748B" />
           </View>
         ))}
       </View>
