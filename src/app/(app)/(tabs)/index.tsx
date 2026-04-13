@@ -1,16 +1,18 @@
 import React from "react";
-import { SafeAreaView, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView, ScrollView, Text, TouchableOpacity, View, Dimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useMemo, useState } from "react";
 import { useUser } from "@clerk/clerk-expo";
 import { client } from "@/lib/sanity/client";
 import { defineQuery } from "groq";
+import { LineChart } from "react-native-chart-kit";
 
-// ⚠️ NOTE: This top LinearGradient is currently unused — you should REMOVE it
-// because it’s not wrapped around any component.
-// We'll properly use it inside TodayWorkoutCard later.
+const BACKEND_URL =
+  process.env.EXPO_PUBLIC_BACKEND_URL?.replace(/\/$/, "") ?? "";
 
+
+// 🧑‍💻 GROQ QUERY TO FETCH WORKOUTS FOR THE USER
 const getWorkoutsQuery = defineQuery(`
 *[_type == "workout" && userId == $userId]
 | order(date desc) {
@@ -26,6 +28,8 @@ const getWorkoutsQuery = defineQuery(`
 }
 `);
 
+
+// 🏋️ WORKOUT TYPE DEFINITION
 type Workout = {
   _id: string;
   date?: string;
@@ -37,16 +41,110 @@ type Workout = {
   }[];
 };
 
+type AiWorkout = {
+  title: string;
+  duration: string;
+  exercises: {
+    name: string;
+    sets: number;
+    reps: string;
+  }[];
+};
+
+const isAiWorkout = (value: unknown): value is AiWorkout => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const workout = value as Partial<AiWorkout>;
+
+  return (
+    typeof workout.title === "string" &&
+    typeof workout.duration === "string" &&
+    Array.isArray(workout.exercises)
+  );
+};
+
+// 📅 Get last 7 days (labels + actual dates)
+const getLast7Days = () => {
+  const days = [];
+  const today = new Date();
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(today.getDate() - i);
+
+    days.push({
+      date: d,
+      label: d.toLocaleDateString("en-US", { weekday: "short" }),
+    });
+  }
+
+  return days;
+};
+
 export default function Page() {
-  // 👤 USER DATA (replace with real data later)
-  const userName = "Okey";
+
 
   // 🏋️ WORKOUT HISTORY 
   const { user } = useUser();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
+  const [aiWorkout, setAiWorkout] = useState<AiWorkout | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
 
+  // ▶️ FUNCTION TO FETCH AI-GENERATED WORKOUT 
+  const getAiWorkout = async () => {
+    try {
+      setAiLoading(true);
+
+      if (!BACKEND_URL) {
+        console.error("Missing EXPO_PUBLIC_BACKEND_URL");
+        setAiWorkout(null);
+        return;
+      }
+
+      const response = await fetch(`${BACKEND_URL}/api/ai/workout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fitnessLevel: streak > 10 ? "advanced" : "beginner",
+          goal: "build muscle",
+          recentWorkouts: workouts.slice(0, 5),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("AI workout request failed:", data);
+        setAiWorkout(null);
+        return;
+      }
+
+      if (!isAiWorkout(data)) {
+        console.error("Invalid AI workout payload:", data);
+        setAiWorkout(null);
+        return;
+      }
+
+      setAiWorkout(data);
+    } catch (err) {
+      console.error("AI workout error:", err);
+      setAiWorkout(null);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+
+  // 👤 USER DATA
+  const userName = user?.firstName || "User";
+
+  // 🔄 FETCH WORKOUTS ON COMPONENT MOUNT
   useEffect(() => {
     const fetchWorkouts = async () => {
       if (!user?.id) return;
@@ -67,12 +165,6 @@ export default function Page() {
     fetchWorkouts();
   }, [user?.id]);
 
-  // 🏋️ TODAY'S WORKOUT DATA
-  const todayWorkout = {
-    title: "Full Body Strength",
-    duration: "45 min",
-    exercises: 6,
-  };
 
   // ▶️ CHECK IF USER HAS ACTIVE WORKOUT
   const hasActiveWorkout = true;
@@ -88,15 +180,15 @@ export default function Page() {
     );
   }, [workouts]);
 
-
+  // 🧮 FUNCTION TO CALCULATE CURRENT STREAK
   const getStreak = (workouts: any[]) => {
     if (!workouts.length) return 0;
 
     // get unique workout dates
     const workoutDays = new Set(
-      workouts.map((w) =>
-        new Date(w.date).toDateString()
-      )
+      workouts
+        .filter((w) => w.date)
+        .map((w) => new Date(w.date!).toDateString())
     );
 
     // check backwards from today to see how many consecutive days have workouts
@@ -124,7 +216,13 @@ export default function Page() {
   const streak = useMemo(() => getStreak(workouts), [workouts]);
 
   // 📊 STATS DATA (Section you're currently working on)
-  const stats = useMemo(
+  const stats = useMemo<
+    ReadonlyArray<{
+      label: string;
+      value: string;
+      icon: "bar-chart-outline" | "time-outline" | "flame-outline";
+    }>
+  >(
     () => [
       {
         label: "Workouts",
@@ -147,25 +245,53 @@ export default function Page() {
 
   // 🕘 RECENT ACTIVITY DATA
   const recentActivity = useMemo(() => {
-  return workouts.slice(0, 3).map((w) => ({
-    name:
-      w.exercises?.[0]?.exercise?.name || "Workout Session",
-    date: new Date(w.date || "").toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    }),
-    duration: `${Math.round((w.duration ?? 0) / 60)} min`,
-  }));
-}, [workouts]);
+    return workouts.slice(0, 3).map((w) => ({
+      name:
+        w.exercises?.[0]?.exercise?.name || "Workout Session",
+      date: w.date
+        ? new Date(w.date).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        })
+        : "Unknown",
+      duration: `${Math.round((w.duration ?? 0) / 60)} min`,
+    }));
+  }, [workouts]);
+
+  // 📊 WEEKLY PROGRESS DATA FOR CHART
+  const weeklyData = useMemo(() => {
+    const days = getLast7Days();
+
+    return {
+      labels: days.map((d) => d.label),
+      datasets: [
+        {
+          data: days.map((d) => {
+            const dayStr = d.date.toDateString();
+
+            const workoutsForDay = workouts.filter((w) => {
+              if (!w.date) return false;
+              return new Date(w.date).toDateString() === dayStr;
+            });
+
+            // 🔥 Use duration (lighter than volume for home)
+            return workoutsForDay.reduce((sum, w) => {
+              return sum + Math.round((w.duration ?? 0) / 60);
+            }, 0);
+          }),
+        },
+      ],
+    };
+  }, [workouts]);
 
 
-if (loading) {
-  return (
-    <SafeAreaView className="flex-1 bg-slate-950 items-center justify-center">
-      <Text className="text-white">Loading dashboard...</Text>
-    </SafeAreaView>
-  );
-}
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-slate-950 items-center justify-center">
+        <Text className="text-white">Loading dashboard...</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     // 🧱 MAIN SCREEN CONTAINER
@@ -181,10 +307,29 @@ if (loading) {
         <HomeHeader userName={userName} />
 
         {/* 🔥 TODAY'S WORKOUT CARD */}
-        <TodayWorkoutCard workout={todayWorkout} />
+        <TodayWorkoutCard
+          workout={
+            aiWorkout
+              ? {
+                title: aiWorkout.title,
+                duration: aiWorkout.duration,
+                exercises: aiWorkout.exercises.length,
+              }
+              : {
+                title: "Generate Workout",
+                duration: "--",
+                exercises: 0,
+              }
+          }
+          onGenerateWorkout={getAiWorkout}
+          isLoading={aiLoading}
+        />
 
         {/* 📊 STATS SECTION (YOU ARE HERE) */}
         <QuickStatsRow stats={stats} />
+
+        {/* 📈 WEEKLY PROGRESS CHART */}
+        <WeeklyChart data={weeklyData} />
 
         {/* ▶️ CONTINUE / START WORKOUT */}
         <ContinueWorkoutCard hasActiveWorkout={hasActiveWorkout} />
@@ -196,6 +341,39 @@ if (loading) {
   );
 }
 
+// 📈 WEEKLY PROGRESS CHART COMPONENT
+function WeeklyChart({ data }: { data: any }) {
+  const screenWidth = Dimensions.get("window").width;
+
+  return (
+    <View className="mb-6">
+      <Text className="text-white text-xl font-bold mb-3">
+        Weekly Activity
+      </Text>
+
+      <LineChart
+        data={data}
+        width={screenWidth - 32}
+        height={180}
+        chartConfig={{
+          backgroundGradientFrom: "#020617",
+          backgroundGradientTo: "#020617",
+          decimalPlaces: 0,
+          color: (opacity = 1) => `rgba(34, 197, 94, ${opacity})`,
+          labelColor: () => "#94A3B8",
+          propsForDots: {
+            r: "4",
+          },
+        }}
+        bezier
+        style={{
+          borderRadius: 16,
+        }}
+      />
+    </View>
+  );
+}
+
 //
 // 🔹 HEADER COMPONENT
 //
@@ -204,7 +382,7 @@ function HomeHeader({ userName }: { userName: string }) {
     <View className="flex-row items-center justify-between pt-4 pb-6">
       <View>
         {/* 👋 GREETING TEXT */}
-        <Text className="text-slate-400 text-base">Good Morning 👋</Text>
+        <Text className="text-slate-400 text-base">Welcome To FitStack  👋</Text>
 
         {/* 👤 USER NAME */}
         <Text className="text-white text-3xl font-bold mt-1">{userName}</Text>
@@ -231,8 +409,12 @@ function HomeHeader({ userName }: { userName: string }) {
 //
 function TodayWorkoutCard({
   workout,
+  onGenerateWorkout,
+  isLoading,
 }: {
   workout: { title: string; duration: string; exercises: number };
+  onGenerateWorkout: () => Promise<void>;
+  isLoading: boolean;
 }) {
   return (
     // GRADIENT CARD BACKGROUND
@@ -283,9 +465,12 @@ function TodayWorkoutCard({
       </View>
 
       {/* ▶️ START BUTTON */}
-      <TouchableOpacity activeOpacity={0.8} className="bg-slate-950 rounded-2xl py-4 items-center mt-5 active:scale-95">
+      <TouchableOpacity
+        onPress={onGenerateWorkout}
+        className="bg-slate-950 rounded-2xl py-4 items-center mt-5 active:scale-95"
+      >
         <Text className="text-white font-semibold text-base">
-          Start Workout
+          {isLoading ? "Generating..." : "Generate Workout"}
         </Text>
       </TouchableOpacity>
     </LinearGradient>
