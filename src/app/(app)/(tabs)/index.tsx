@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useMemo, useState } from "react";
 import { useUser } from "@clerk/clerk-expo";
 import { client } from "@/lib/sanity/client";
+import { calculateStats } from "@/lib/stats";
 import { defineQuery } from "groq";
 import { LineChart } from "react-native-chart-kit";
 
@@ -92,6 +93,31 @@ export default function Page() {
   const [loading, setLoading] = useState(true);
   const [aiWorkout, setAiWorkout] = useState<AiWorkout | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null);
+  const days = useMemo(() => getLast7Days(), []);
+
+
+
+
+  // 🔥 Find selected date based on chart interaction
+  const selectedDate = selectedDayIndex !== null
+    ? getLast7Days()[selectedDayIndex].date
+    : null;
+
+
+  // 🔥 Filter workouts for the selected date (if any)
+  const selectedDayWorkouts = useMemo(() => {
+    if (!selectedDate) return [];
+
+    return workouts.filter((w) => {
+      if (!w.date) return false;
+
+      return (
+        new Date(w.date).toDateString() ===
+        selectedDate.toDateString()
+      );
+    });
+  }, [selectedDate, workouts]);
 
 
   // ▶️ FUNCTION TO FETCH AI-GENERATED WORKOUT 
@@ -104,18 +130,24 @@ export default function Page() {
         setAiWorkout(null);
         return;
       }
-
+      // 🧑‍💻 CALL BACKEND TO GET AI WORKOUT
       const response = await fetch(`${BACKEND_URL}/api/ai/workout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          fitnessLevel: streak > 10 ? "advanced" : "beginner",
+          fitnessLevel:
+            totalWorkouts > 20
+              ? "advanced"
+              : totalWorkouts > 5
+                ? "intermediate"
+                : "beginner",
           goal: "build muscle",
           recentWorkouts: workouts.slice(0, 5),
         }),
       });
+
 
       const data = await response.json();
 
@@ -142,12 +174,17 @@ export default function Page() {
 
 
   // 👤 USER DATA
-  const userName = user?.firstName || "User";
+  const userName = user?.firstName || "Guest";
 
   // 🔄 FETCH WORKOUTS ON COMPONENT MOUNT
   useEffect(() => {
     const fetchWorkouts = async () => {
-      if (!user?.id) return;
+      // ✅ HANDLE GUEST USERS
+      if (!user?.id) {
+        setWorkouts([]);     // empty state
+        setLoading(false);   // stop loading
+        return;
+      }
 
       try {
         const data = await client.fetch<Workout[]>(getWorkoutsQuery, {
@@ -165,55 +202,16 @@ export default function Page() {
     fetchWorkouts();
   }, [user?.id]);
 
-
   // ▶️ CHECK IF USER HAS ACTIVE WORKOUT
   const hasActiveWorkout = true;
 
-
-  // 🧮 CALCULATE TOTAL WORKOUTS (for stats)  
-  const totalWorkouts = workouts.length;
-
-  // 🧮 CALCULATE TOTAL MINUTES (for stats)
-  const totalMinutes = useMemo(() => {
-    return Math.round(
-      workouts.reduce((sum, w) => sum + (w.duration ?? 0), 0) / 60
-    );
-  }, [workouts]);
-
-  // 🧮 FUNCTION TO CALCULATE CURRENT STREAK
-  const getStreak = (workouts: any[]) => {
-    if (!workouts.length) return 0;
-
-    // get unique workout dates
-    const workoutDays = new Set(
-      workouts
-        .filter((w) => w.date)
-        .map((w) => new Date(w.date!).toDateString())
-    );
-
-    // check backwards from today to see how many consecutive days have workouts
-    let streak = 0;
-    const today = new Date();
-
-    for (let i = 0; i < 365; i++) {
-      const d = new Date();
-      d.setDate(today.getDate() - i);
-
-      const key = d.toDateString();
-
-      if (workoutDays.has(key)) {
-        streak++;
-      } else {
-        break; // streak broken
-      }
-    }
-
-    return streak;
-  };
+  // 🧮 CALCULATE STATS USING THE UTILS
+  const { totalWorkouts, totalMinutes, streak } = useMemo(
+    () => calculateStats(workouts),
+    [workouts]
+  );
 
 
-  // 🧮 CALCULATE CURRENT STREAK (for stats)
-  const streak = useMemo(() => getStreak(workouts), [workouts]);
 
   // 📊 STATS DATA (Section you're currently working on)
   const stats = useMemo<
@@ -260,7 +258,6 @@ export default function Page() {
 
   // 📊 WEEKLY PROGRESS DATA FOR CHART
   const weeklyData = useMemo(() => {
-    const days = getLast7Days();
 
     return {
       labels: days.map((d) => d.label),
@@ -306,6 +303,48 @@ export default function Page() {
         {/* 🔹 HEADER / GREETING */}
         <HomeHeader userName={userName} />
 
+        {user ? (
+          <>
+            <QuickStatsRow stats={stats} />
+            {/* 📈 WEEKLY PROGRESS CHART */}
+            <WeeklyChart
+              data={weeklyData}
+              selectedDayIndex={selectedDayIndex}
+              setSelectedDayIndex={setSelectedDayIndex}
+            />
+            {selectedDayIndex !== null && (
+              <View className="mt-4 bg-slate-900 p-4 rounded-2xl border border-slate-800">
+
+                <Text className="text-white font-semibold mb-2">
+                  {days[selectedDayIndex].label} Activity
+                </Text>
+
+                {selectedDayWorkouts.length === 0 ? (
+                  <Text className="text-slate-400">
+                    No workouts this day
+                  </Text>
+                ) : (
+                  selectedDayWorkouts.map((w) => (
+                    <View key={w._id} className="mb-2">
+                      <Text className="text-white font-medium">
+                        {w.exercises?.[0]?.exercise?.name || "Workout"}
+                      </Text>
+
+                      <Text className="text-slate-400 text-sm">
+                        {Math.round((w.duration ?? 0) / 60)} min
+                      </Text>
+                    </View>
+                  ))
+                )}
+              </View>
+            )}
+          </>
+        ) : (
+          <Text className="text-slate-500 mt-4">
+            Sign in to unlock your progress tracking
+          </Text>
+        )}
+
         {/* 🔥 TODAY'S WORKOUT CARD */}
         <TodayWorkoutCard
           workout={
@@ -325,11 +364,6 @@ export default function Page() {
           isLoading={aiLoading}
         />
 
-        {/* 📊 STATS SECTION (YOU ARE HERE) */}
-        <QuickStatsRow stats={stats} />
-
-        {/* 📈 WEEKLY PROGRESS CHART */}
-        <WeeklyChart data={weeklyData} />
 
         {/* ▶️ CONTINUE / START WORKOUT */}
         <ContinueWorkoutCard hasActiveWorkout={hasActiveWorkout} />
@@ -342,8 +376,13 @@ export default function Page() {
 }
 
 // 📈 WEEKLY PROGRESS CHART COMPONENT
-function WeeklyChart({ data }: { data: any }) {
+function WeeklyChart({ data, selectedDayIndex, setSelectedDayIndex, }: {
+  data: any;
+  selectedDayIndex: number | null;
+  setSelectedDayIndex: React.Dispatch<React.SetStateAction<number | null>>;
+}) {
   const screenWidth = Dimensions.get("window").width;
+
 
   return (
     <View className="mb-6">
@@ -355,6 +394,12 @@ function WeeklyChart({ data }: { data: any }) {
         data={data}
         width={screenWidth - 32}
         height={180}
+        onDataPointClick={({ index }) => {
+          setSelectedDayIndex((prev) => (prev === index ? null : index));
+        }}
+        getDotColor={(value, index) =>
+          index === selectedDayIndex ? "#22C55E" : "#475569"
+        }
         chartConfig={{
           backgroundGradientFrom: "#020617",
           backgroundGradientTo: "#020617",
@@ -363,16 +408,17 @@ function WeeklyChart({ data }: { data: any }) {
           labelColor: () => "#94A3B8",
           propsForDots: {
             r: "4",
+            strokeWidth: "2",
+            stroke: "#22C55E",
           },
         }}
         bezier
-        style={{
-          borderRadius: 16,
-        }}
       />
     </View>
   );
 }
+
+
 
 //
 // 🔹 HEADER COMPONENT
@@ -609,6 +655,7 @@ function RecentActivitySection({
           See all
         </Text>
       </View>
+
 
       {/* 📋 LIST */}
       <View className="gap-3">

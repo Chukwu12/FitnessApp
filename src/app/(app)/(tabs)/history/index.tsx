@@ -172,8 +172,10 @@ const getMuscleVolume = (workouts: WorkoutsQueryResultItem[]) => {
 };
 
 
+
 export default function HistoryPage() {
   const { user } = useUser();
+  const isSignedIn = !!user;
   const [workouts, setWorkouts] = useState<WorkoutsQueryResultItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -181,7 +183,11 @@ export default function HistoryPage() {
   const router = useRouter();
 
   const fetchWorkouts = async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setWorkouts([]);     // clear data
+      setLoading(false);   // stop loading
+      return;
+    }
 
     console.log("Clerk user id:", user.id);
 
@@ -291,20 +297,48 @@ export default function HistoryPage() {
 
 
   if (loading) {
-    return (
-      <SafeAreaView className="flex-1 bg-gray-50">
-        <View className="px-6 py-4 bg-white border-b border-gray-200">
-          <Text className="text-2xl font-bold text-gray-900">
-            Workout History
+  return (
+    <SafeAreaView className="flex-1 bg-slate-950 items-center justify-center">
+      <ActivityIndicator size="large" color="#22C55E" />
+      <Text className="text-slate-400 mt-4">
+        Loading your workouts...
+      </Text>
+    </SafeAreaView>
+  );
+}
+
+if (!isSignedIn) {
+  return (
+    <SafeAreaView className="flex-1 bg-slate-950">
+      <View className="px-6 pt-6 pb-4 border-b border-slate-800">
+        <Text className="text-2xl font-bold text-white">
+          Workout History
+        </Text>
+      </View>
+
+      <View className="flex-1 items-center justify-center px-6">
+        <Ionicons name="lock-closed-outline" size={64} color="#64748B" />
+
+        <Text className="text-white text-xl font-semibold mt-4">
+          Sign in required
+        </Text>
+
+        <Text className="text-slate-400 text-center mt-2">
+          Log in to view your workout history, stats, and progress.
+        </Text>
+
+        <TouchableOpacity
+          onPress={() => router.push("/sign-in")}
+          className="bg-green-500 rounded-2xl px-6 py-4 mt-6 active:scale-95"
+        >
+          <Text className="text-slate-950 font-bold">
+            Go to Sign In
           </Text>
-          <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color="#3882F6" />
-            <Text className="text-gray-600 mt-4">Loading your workouts...</Text>
-          </View>
-        </View>
-      </SafeAreaView>
-    );
-  }
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
 
 
   // 🔥 Helper to find the all-time PR (heaviest weight lifted) across all workouts

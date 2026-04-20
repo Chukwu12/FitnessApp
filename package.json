@@ -12,6 +12,7 @@
   "dependencies": {
     "@clerk/clerk-expo": "^2.19.9",
     "@expo/vector-icons": "^14.1.0",
+    "@google/generative-ai": "^0.24.1",
     "@sanity/client": "^7.13.2",
     "@sanity/image-url": "^2.0.2",
     "axios": "^1.13.2",

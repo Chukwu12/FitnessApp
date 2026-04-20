@@ -4,7 +4,11 @@ const adminClient = require("../sanityClient.cjs");
 
 const router = express.Router();
 
+
 router.post("/", async (req, res) => {
+  console.log("🔥 /api/ai/workout HIT");
+  console.log("Body:", req.body);
+
   try {
     const { userId, date, duration, exercises } = req.body || {};
 

@@ -1,12 +1,14 @@
 const express = require("express");
-const OpenAI = require("openai");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({
+  model: "gemini-2.0-flash",
+});
 
 const router = express.Router();
 
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // server-only env var
-});
+
 
 router.post("/", async (req, res) => {
   try {
@@ -16,36 +18,48 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Exercise name is required" });
     }
 
-    const prompt = `You are a fitness coach. Provide clear beginner-friendly instructions for: ${exerciseName}.
+    const prompt = `
+You are a fitness coach. Provide clear beginner-friendly instructions for: ${exerciseName}.
+
 Use markdown with this format:
 
 ## Equipment required
-
 ## Instructions
-
 ### Tips
-
 ### Variations
-
 ### Safety
-Keep it concise.`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-    });
+Keep it concise.
+`;
 
-    return res.json({ message: response.choices[0].message.content });
+console.log("✅ Gemini responded");
+
+ const result = await model.generateContent(prompt);
+
+if (!result || !result.response) {
+  console.error("❌ Gemini returned invalid response:", result);
+  return res.status(500).json({
+    error: "AI failed to generate response",
+  });
+}
+
+const text = result.response.text();
+
+    return res.json({ message: text });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "Error fetching AI guidance" });
-  }
+  console.error("🔥 FULL AI ERROR:", err);
+
+  return res.status(500).json({
+    error: "Error generating workout",
+    message: err.message,
+  });
+}
 });
 
 // 🏋️ AI WORKOUT GENERATOR
 router.post("/workout", async (req, res) => {
   try {
-    const { fitnessLevel = "beginner", goal = "general fitness" } = req.body;
+    const { fitnessLevel = "beginner", goal = "general fitness" } = req.body || {};
 
     const prompt = `
 You are a professional fitness coach.
@@ -62,21 +76,24 @@ Return ONLY JSON in this format:
   ]
 }
 
-Keep it realistic and concise.
+Do not include markdown. Do not include explanations.
 `;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-    });
+    const result = await model.generateContent(prompt);
+    let text = result.response.text();
 
-    const text = response.choices[0].message.content;
+    // 🔥 CLEAN RESPONSE (VERY IMPORTANT)
+    text = text
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
 
-    // ⚠️ Parse AI response safely
     let workout;
+
     try {
       workout = JSON.parse(text);
-    } catch {
+    } catch (err) {
+      console.error("Parse error:", text);
       return res.status(500).json({
         error: "Failed to parse AI workout",
         raw: text,

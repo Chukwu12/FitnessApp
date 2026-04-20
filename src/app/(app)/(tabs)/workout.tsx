@@ -6,73 +6,134 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 
 function Workout() {
   const router = useRouter();
 
-  const startWorkout = () => {
-    //Navigate to active workout screen
-    router.push("/(app)/active-workout");
-  };
-
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <StatusBar barStyle="dark-content" />
+    <SafeAreaView className="flex-1 bg-slate-950">
+      <StatusBar barStyle="light-content" />
 
-      {/* Main start workout scren */}
-      <View className="flex-1 px-6">
-        {/* header */}
-        <View className="pt-8 pb-6">
-          <Text className="text-3x-l font-bold text-gray-900 mb-2">
-            Ready to Train?
+      <ScrollView
+        className="px-4"
+        contentContainerStyle={{ paddingBottom: 120 }}
+      >
+        {/* 🔹 HEADER */}
+        <View className="pt-6 pb-6">
+          <Text className="text-white text-3xl font-bold">
+            Workout Hub
           </Text>
-          <Text className="text-lg text-gray-600">
-            Start your workout session
+          <Text className="text-slate-400 mt-1">
+            Train smarter. Stay consistent.
           </Text>
         </View>
-      </View>
 
-      {/* Generic Start workout Card */}
-      <View className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 mx-6 mb-8">
-        <View className="flex-row items-center justify-between mb-6">
-          <View className="flex-row items-center">
-            <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-3">
-              <Ionicons name="fitness" size={24} color="#3882F6" />
-            </View>
-            <View>
-              <Text className="text-xl font-semibold text=gray-900">
+        {/* 🔥 PRIMARY CARD */}
+        <LinearGradient
+          colors={["#22C55E", "#16A34A"]}
+          className="rounded-3xl p-5 mb-5"
+        >
+          <View className="flex-row justify-between items-start">
+            <View className="flex-1 pr-4">
+              <Text className="text-slate-950 text-sm font-semibold uppercase">
+                Ready to Train
+              </Text>
+
+              <Text className="text-slate-950 text-3xl font-extrabold mt-2">
                 Start Workout
               </Text>
-              <Text className="text-gray-500">Begain your taining session</Text>
+
+              <Text className="text-slate-950 mt-2">
+                Build strength & consistency
+              </Text>
+            </View>
+
+            <View className="h-14 w-14 rounded-2xl bg-white/20 items-center justify-center">
+              <Ionicons name="play" size={22} color="#020617" />
             </View>
           </View>
-          <View className="bg-green-100 px-3 py-1 rounded-full">
-            <Text className="text-green-700 font-medium text-sm">Ready</Text>
-          </View>
+
+          <TouchableOpacity
+            onPress={() => router.push("/(app)/active-workout")}
+            className="bg-slate-950 rounded-2xl py-4 items-center mt-5 active:scale-95"
+          >
+            <Text className="text-white font-semibold">
+              Start Session
+            </Text>
+          </TouchableOpacity>
+        </LinearGradient>
+
+        {/* ⚡ QUICK ACTIONS */}
+        <View className="flex-row gap-3 mb-5">
+          <QuickAction
+            icon="barbell-outline"
+            label="Exercises"
+            onPress={() => router.push("/(tabs)/exercises")}
+          />
+          <QuickAction
+            icon="time-outline"
+            label="History"
+            onPress={() => router.push("/(tabs)/history")}
+          />
+          <QuickAction
+            icon="flash-outline"
+            label="Quick Start"
+            onPress={() => router.push("/(app)/active-workout")}
+          />
         </View>
 
-        {/* Start Button */}
-        <TouchableOpacity
-          onPress={startWorkout}
-          className="bg-blue-600 rounded-2xl py-4 items-center active:bg-blue-700 active:scale-95"
-          activeOpacity={0.8}
-        >
-          <View className="flex-row items-center">
-            <Ionicons
-              name="play"
-              size={20}
-              color="white"
-              style={{ marginRight: 8 }}
-            />
-            <Text className="text-white font-semibold text-lg">
-              Start Workout
+        {/* 🕘 LAST WORKOUT */}
+        <View className="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-5">
+          <Text className="text-white font-semibold mb-2">
+            Last Workout
+          </Text>
+
+          <Text className="text-slate-400 text-sm">
+            Upper Body • 45 min • Yesterday
+          </Text>
+
+          <TouchableOpacity className="mt-3">
+            <Text className="text-green-500 font-semibold">
+              View Details →
             </Text>
-          </View>
-        </TouchableOpacity>
-      </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* 💡 TIP */}
+        <View className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+          <Text className="text-white font-semibold mb-2">
+            Tip of the Day
+          </Text>
+          <Text className="text-slate-400 text-sm">
+            Consistency beats intensity. Show up daily.
+          </Text>
+        </View>
+      </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function QuickAction({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: any;
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      className="flex-1 bg-slate-900 border border-slate-800 rounded-2xl p-4 items-center active:scale-95"
+    >
+      <Ionicons name={icon} size={20} color="#22C55E" />
+      <Text className="text-white text-sm mt-2">{label}</Text>
+    </TouchableOpacity>
   );
 }
 
