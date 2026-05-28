@@ -6,7 +6,7 @@ const router = express.Router();
 
 
 router.post("/", async (req, res) => {
-  console.log("🔥 /api/ai/workout HIT");
+  console.log("🔥 /api/workouts HIT");
   console.log("Body:", req.body);
 
   try {

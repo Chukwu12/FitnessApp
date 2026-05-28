@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useMemo, useState } from "react";
 import { useUser } from "@clerk/clerk-expo";
+import { useRouter } from "expo-router";
 import { client } from "@/lib/sanity/client";
 import { calculateStats } from "@/lib/stats";
 import { defineQuery } from "groq";
@@ -42,27 +43,37 @@ type Workout = {
   }[];
 };
 
-type AiWorkout = {
-  title: string;
-  duration: string;
-  exercises: {
+type NutritionAdvice = {
+  goal: string;
+  description: string;
+  dailyCalories: string;
+  macros: {
+    protein: string;
+    carbs: string;
+    fats: string;
+  };
+  tips: string[];
+  mealSuggestions: Array<{
+    meal: string;
     name: string;
-    sets: number;
-    reps: string;
-  }[];
+    calories: string;
+  }>;
 };
 
-const isAiWorkout = (value: unknown): value is AiWorkout => {
+const isNutritionAdvice = (value: unknown): value is NutritionAdvice => {
   if (!value || typeof value !== "object") {
     return false;
   }
 
-  const workout = value as Partial<AiWorkout>;
+  const advice = value as Partial<NutritionAdvice>;
 
   return (
-    typeof workout.title === "string" &&
-    typeof workout.duration === "string" &&
-    Array.isArray(workout.exercises)
+    typeof advice.goal === "string" &&
+    typeof advice.description === "string" &&
+    typeof advice.dailyCalories === "string" &&
+    !!advice.macros &&
+    Array.isArray(advice.tips) &&
+    Array.isArray(advice.mealSuggestions)
   );
 };
 
@@ -89,10 +100,11 @@ export default function Page() {
 
   // 🏋️ WORKOUT HISTORY 
   const { user } = useUser();
+  const router = useRouter();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
-  const [aiWorkout, setAiWorkout] = useState<AiWorkout | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
+  const [nutritionAdvice, setNutritionAdvice] = useState<NutritionAdvice | null>(null);
+  const [nutritionLoading, setNutritionLoading] = useState(false);
   const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null);
   const days = useMemo(() => getLast7Days(), []);
 
@@ -120,31 +132,37 @@ export default function Page() {
   }, [selectedDate, workouts]);
 
 
-  // ▶️ FUNCTION TO FETCH AI-GENERATED WORKOUT 
-  const getAiWorkout = async () => {
+  // ▶️ FUNCTION TO FETCH AI-GENERATED NUTRITION ADVICE
+  const getNutritionAdvice = async () => {
     try {
-      setAiLoading(true);
+      setNutritionLoading(true);
 
       if (!BACKEND_URL) {
         console.error("Missing EXPO_PUBLIC_BACKEND_URL");
-        setAiWorkout(null);
+        setNutritionAdvice(null);
         return;
       }
-      // 🧑‍💻 CALL BACKEND TO GET AI WORKOUT
-      const response = await fetch(`${BACKEND_URL}/api/ai/workout`, {
+
+      // 🧑‍💻 CALL BACKEND TO GET NUTRITION ADVICE
+      const response = await fetch(`${BACKEND_URL}/api/ai/nutrition`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          fitnessLevel:
+          fitness_level:
             totalWorkouts > 20
               ? "advanced"
               : totalWorkouts > 5
                 ? "intermediate"
                 : "beginner",
-          goal: "build muscle",
-          recentWorkouts: workouts.slice(0, 5),
+          goal: "Build muscle",
+          dietary_preferences: ["High protein", "Balanced carbs"],
+          health_conditions: ["None"],
+          schedule: {
+            days_per_week: 4,
+            session_duration: 60,
+          },
         }),
       });
 
@@ -152,23 +170,23 @@ export default function Page() {
       const data = await response.json();
 
       if (!response.ok) {
-        console.error("AI workout request failed:", data);
-        setAiWorkout(null);
+        console.error("Nutrition advice request failed:", data);
+        setNutritionAdvice(null);
         return;
       }
 
-      if (!isAiWorkout(data)) {
-        console.error("Invalid AI workout payload:", data);
-        setAiWorkout(null);
+      if (!isNutritionAdvice(data)) {
+        console.error("Invalid nutrition payload:", data);
+        setNutritionAdvice(null);
         return;
       }
 
-      setAiWorkout(data);
+      setNutritionAdvice(data);
     } catch (err) {
-      console.error("AI workout error:", err);
-      setAiWorkout(null);
+      console.error("Nutrition advice error:", err);
+      setNutritionAdvice(null);
     } finally {
-      setAiLoading(false);
+      setNutritionLoading(false);
     }
   };
 
@@ -204,6 +222,10 @@ export default function Page() {
 
   // ▶️ CHECK IF USER HAS ACTIVE WORKOUT
   const hasActiveWorkout = true;
+
+  const handleContinueWorkout = () => {
+    router.push("/active-workout");
+  };
 
   // 🧮 CALCULATE STATS USING THE UTILS
   const { totalWorkouts, totalMinutes, streak } = useMemo(
@@ -345,28 +367,19 @@ export default function Page() {
           </Text>
         )}
 
-        {/* 🔥 TODAY'S WORKOUT CARD */}
-        <TodayWorkoutCard
-          workout={
-            aiWorkout
-              ? {
-                title: aiWorkout.title,
-                duration: aiWorkout.duration,
-                exercises: aiWorkout.exercises.length,
-              }
-              : {
-                title: "Generate Workout",
-                duration: "--",
-                exercises: 0,
-              }
-          }
-          onGenerateWorkout={getAiWorkout}
-          isLoading={aiLoading}
+        {/* 🥗 DAILY NUTRITION CARD */}
+        <NutritionAdviceCard
+          advice={nutritionAdvice}
+          onGenerateAdvice={getNutritionAdvice}
+          isLoading={nutritionLoading}
         />
 
 
         {/* ▶️ CONTINUE / START WORKOUT */}
-        <ContinueWorkoutCard hasActiveWorkout={hasActiveWorkout} />
+        <ContinueWorkoutCard
+          hasActiveWorkout={hasActiveWorkout}
+          onPrimaryPress={handleContinueWorkout}
+        />
 
         {/* 🕘 RECENT ACTIVITY */}
         <RecentActivitySection items={recentActivity} />
@@ -453,19 +466,22 @@ function HomeHeader({ userName }: { userName: string }) {
 //
 // 🔥 TODAY WORKOUT CARD (UPGRADED WITH GRADIENT)
 //
-function TodayWorkoutCard({
-  workout,
-  onGenerateWorkout,
+function NutritionAdviceCard({
+  advice,
+  onGenerateAdvice,
   isLoading,
 }: {
-  workout: { title: string; duration: string; exercises: number };
-  onGenerateWorkout: () => Promise<void>;
+  advice: NutritionAdvice | null;
+  onGenerateAdvice: () => Promise<void>;
   isLoading: boolean;
 }) {
+  const tips = advice?.tips?.slice(0, 2) ?? [];
+  const meals = advice?.mealSuggestions?.slice(0, 2) ?? [];
+
   return (
     // GRADIENT CARD BACKGROUND
     <LinearGradient
-      colors={["#22C55E", "#16A34A"]}
+      colors={["#0EA5A4", "#0891B2"]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       className="rounded-3xl p-5 mb-5"
@@ -476,50 +492,109 @@ function TodayWorkoutCard({
         <View className="flex-1 pr-4">
           {/* 🏷️ SMALL LABEL */}
           <Text className="text-slate-950 text-sm font-semibold uppercase tracking-wide">
-            Today’s Workout
+            Today's Nutrition
           </Text>
 
-          {/* 💪 WORKOUT TITLE */}
+          {/* 🥗 NUTRITION TITLE */}
           <Text className="text-slate-950 text-3xl font-extrabold mt-2">
-            {workout.title}
+            {advice?.goal || "Nutrition Advice"}
           </Text>
 
-          {/* ⏱️ WORKOUT META INFO */}
+          {!!advice?.description && (
+            <Text className="text-slate-950/80 text-sm mt-2" numberOfLines={3}>
+              {advice.description}
+            </Text>
+          )}
+
+          {/* 🔢 NUTRITION META INFO */}
           <View className="flex-row items-center mt-3">
-            {/* DURATION */}
+            {/* CALORIES */}
             <View className="flex-row items-center mr-4">
               <Ionicons name="time-outline" size={14} color="#020617" />
               <Text className="text-slate-950 ml-2 font-medium">
-                {workout.duration}
+                {advice?.dailyCalories ? `${advice.dailyCalories} kcal/day` : "--"}
               </Text>
             </View>
 
-            {/* EXERCISE COUNT */}
+            {/* TIPS COUNT */}
             <View className="flex-row items-center">
               <Ionicons name="book-outline" size={14} color="#020617" />
               <Text className="text-slate-950 ml-2 font-medium">
-                {workout.exercises} exercises
+                {tips.length} tips
               </Text>
             </View>
           </View>
+
+          {/* MACROS */}
+          <View className="mt-3">
+            <Text className="text-slate-950 font-semibold text-xs mb-2">
+              Macros
+            </Text>
+
+            <View className="flex-row flex-wrap">
+              <MacroPill label="Protein" value={advice?.macros?.protein || "--"} />
+              <MacroPill label="Carbs" value={advice?.macros?.carbs || "--"} />
+              <MacroPill label="Fats" value={advice?.macros?.fats || "--"} />
+            </View>
+          </View>
+
+          {/* TIPS */}
+          {tips.length > 0 && (
+            <View className="mt-3">
+              {tips.map((tip, i) => (
+                <Text key={`${tip}-${i}`} className="text-slate-950 text-xs mt-1">
+                  - {tip}
+                </Text>
+              ))}
+            </View>
+          )}
+
+          {/* MEAL SUGGESTIONS */}
+          {meals.length > 0 && (
+            <View className="mt-3">
+              {meals.map((meal) => (
+                <Text
+                  key={`${meal.meal}-${meal.name}`}
+                  className="text-slate-950 text-xs mt-1"
+                >
+                  {meal.meal}: {meal.name}
+                  {meal.calories ? ` (${meal.calories} kcal)` : ""}
+                </Text>
+              ))}
+            </View>
+          )}
         </View>
 
-        {/* ▶️ PLAY ICON BOX */}
+        {/* 🥗 ICON BOX */}
         <View className="h-14 w-14 rounded-2xl bg-white/20 items-center justify-center border border-white/20">
-          <Ionicons name="play" size={22} color="#020617" />
+          <Ionicons name="restaurant" size={22} color="#020617" />
         </View>
       </View>
 
-      {/* ▶️ START BUTTON */}
+      {/* ▶️ ACTION BUTTON */}
       <TouchableOpacity
-        onPress={onGenerateWorkout}
+        onPress={onGenerateAdvice}
         className="bg-slate-950 rounded-2xl py-4 items-center mt-5 active:scale-95"
       >
         <Text className="text-white font-semibold text-base">
-          {isLoading ? "Generating..." : "Generate Workout"}
+          {isLoading
+            ? "Generating..."
+            : advice
+              ? "Regenerate Nutrition Advice"
+              : "Generate Nutrition Advice"}
         </Text>
       </TouchableOpacity>
     </LinearGradient>
+  );
+}
+
+function MacroPill({ label, value }: { label: string; value: string }) {
+  return (
+    <View className="mr-2 mb-2 rounded-full bg-slate-950/20 border border-white/30 px-3 py-1">
+      <Text className="text-slate-950 text-xs font-semibold">
+        {label}: {value}
+      </Text>
+    </View>
   );
 }
 
@@ -574,7 +649,13 @@ function QuickStatsRow({
 //
 // ▶️ CONTINUE / START WORKOUT CARD
 //
-function ContinueWorkoutCard({ hasActiveWorkout }: { hasActiveWorkout: boolean }) {
+function ContinueWorkoutCard({
+  hasActiveWorkout,
+  onPrimaryPress,
+}: {
+  hasActiveWorkout: boolean;
+  onPrimaryPress: () => void;
+}) {
   return (
     // 🎨 MAIN CARD CONTAINER
     <View className="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-5">
@@ -625,7 +706,11 @@ function ContinueWorkoutCard({ hasActiveWorkout }: { hasActiveWorkout: boolean }
       )}
 
       {/* ▶️ PRIMARY BUTTON */}
-      <TouchableOpacity activeOpacity={0.8} className="bg-green-500 rounded-2xl py-4 items-center mt-5 active:scale-95">
+      <TouchableOpacity
+        onPress={onPrimaryPress}
+        activeOpacity={0.8}
+        className="bg-green-500 rounded-2xl py-4 items-center mt-5 active:scale-95"
+      >
         <Text className="text-slate-950 font-bold text-base">
           {hasActiveWorkout ? "Resume Session" : "Create Workout"}
         </Text>

@@ -169,9 +169,21 @@ export default function ActiveWorkout() {
 
   //Use the stopwatch for timing with offset based on workout start time
   const router = useRouter();
-  const { seconds, minutes, totalSeconds, reset } = useStopwatch({
+  const { seconds, minutes, totalSeconds, reset, pause, start } = useStopwatch({
     autoStart: true,
   });
+  const [isPaused, setIsPaused] = useState(false);
+
+  const togglePauseWorkout = () => {
+    if (isPaused) {
+      start();
+      setIsPaused(false);
+      return;
+    }
+
+    pause();
+    setIsPaused(true);
+  };
 
   // ✅ optional but recommended for web
   if (Platform.OS === "web" && !hasHydrated) {
@@ -332,7 +344,7 @@ export default function ActiveWorkout() {
           text: "End Workout",
           onPress: () => {
             resetWorkout();
-            router.back();
+            router.replace("/workout");
           },
         },
       ]
@@ -408,13 +420,26 @@ export default function ActiveWorkout() {
               </TouchableOpacity>
             </View>
 
+            {/* PAUSE / RESUME */}
+            <TouchableOpacity
+              onPress={togglePauseWorkout}
+              activeOpacity={0.8}
+              className={`px-3 py-2 rounded-xl active:scale-95 ${
+                isPaused ? "bg-emerald-500" : "bg-amber-500"
+              }`}
+            >
+              <Text className="text-slate-950 text-xs font-semibold">
+                {isPaused ? "Resume" : "Pause"}
+              </Text>
+            </TouchableOpacity>
+
             {/* END */}
             <TouchableOpacity
               onPress={cancelWorkout}
               activeOpacity={0.8}
-              className="bg-red-500 px-3 py-2 rounded-xl active:scale-95"
+              className="h-9 w-9 rounded-xl bg-red-500 items-center justify-center active:scale-95"
             >
-              <Text className="text-white text-xs font-semibold">End</Text>
+              <Ionicons name="stop-circle-outline" size={16} color="white" />
             </TouchableOpacity>
           </View>
         </View>

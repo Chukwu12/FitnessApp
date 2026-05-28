@@ -122,9 +122,9 @@ export default function Exercises() {
   // -------------------
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 justify-center items-center bg-gray-50">
-        <ActivityIndicator size="large" color="#3B82F6" />
-        <Text className="mt-2 text-gray-500">Loading exercises...</Text>
+      <SafeAreaView className="flex-1 justify-center items-center bg-slate-950">
+        <ActivityIndicator size="large" color="#22C55E" />
+        <Text className="mt-2 text-slate-400">Loading exercises...</Text>
       </SafeAreaView>
     );
   }
@@ -133,22 +133,22 @@ export default function Exercises() {
   // Main UI
   // -------------------
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-slate-950">
       {/* Header + Search */}
-      <View className="p-4 bg-white border-b border-gray-200">
-        <Text className="text-2xl font-bold text-gray-900">
+      <View className="p-4 bg-slate-900 border-b border-slate-800">
+        <Text className="text-2xl font-bold text-white">
           Exercise Library
         </Text>
-        <Text className="text-gray-500 mt-1">
+        <Text className="text-slate-400 mt-1">
           Discover and master new exercises
         </Text>
 
-        <View className="flex-row items-center bg-gray-100 rounded-xl p-2 mt-3">
-          <Ionicons name="search" size={20} color="#687280" />
+        <View className="flex-row items-center bg-slate-800 rounded-xl p-2 mt-3 border border-slate-700">
+          <Ionicons name="search" size={20} color="#94A3B8" />
           <TextInput
-            className="flex-1 ml-2 text-gray-900"
+            className="flex-1 ml-2 text-white"
             placeholder="Search exercises..."
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor="#64748B"
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -156,7 +156,7 @@ export default function Exercises() {
             <Ionicons
               name="close-circle"
               size={20}
-              color="#687280"
+              color="#94A3B8"
               onPress={() => setSearchQuery("")}
             />
           )}
@@ -180,10 +180,10 @@ export default function Exercises() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={["#3882F6"]}
-            tintColor="#3882F6"
+            colors={["#22C55E"]}
+            tintColor="#22C55E"
             title="Pull to refresh exercises"
-            titleColor="#6B7280"
+            titleColor="#94A3B8"
           />
         }
         initialNumToRender={10}
@@ -193,11 +193,11 @@ export default function Exercises() {
         removeClippedSubviews={true}
         ListEmptyComponent={
           <View className="items-center p-8">
-            <Ionicons name="fitness-outline" size={64} color="#9CA3AF" />
-            <Text className="mt-2 text-lg font-semibold text-gray-900">
+            <Ionicons name="fitness-outline" size={64} color="#64748B" />
+            <Text className="mt-2 text-lg font-semibold text-white">
               {searchQuery ? "No exercises found" : "No exercises yet"}
             </Text>
-            <Text className="text-gray-500 text-center mt-1">
+            <Text className="text-slate-400 text-center mt-1">
               {searchQuery
                 ? "Try adjusting your search"
                 : "Your exercises will appear here"}

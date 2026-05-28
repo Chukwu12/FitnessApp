@@ -32,6 +32,14 @@ export const ACHIEVEMENTS: Achievement[] = [
     requirement: 10,
     type: "workouts",
   },
+  {
+    id: "twenty_five_workouts",
+    title: "25 Workouts",
+    description: "Complete 25 workouts",
+    icon: "ribbon-outline",
+    requirement: 25,
+    type: "workouts",
+  },
 ];
 
 export const evaluateAchievements = (

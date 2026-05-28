@@ -1,0 +1,44 @@
+name: Backend Smoke
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  backend-health:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start backend and verify health endpoint
+        env:
+          PORT: 4010
+          GEMINI_API_KEY: dummy-key-for-smoke-test
+        run: |
+          set -e
+          node backend/server.js > backend.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true; wait "$SERVER_PID" 2>/dev/null || true' EXIT
+
+          curl -fsS \
+            --retry 40 \
+            --retry-delay 1 \
+            --retry-connrefused \
+            "http://127.0.0.1:${PORT}/health" > /tmp/health.json
+          cat /tmp/health.json
+
+          kill "$SERVER_PID"
+          wait "$SERVER_PID" || true

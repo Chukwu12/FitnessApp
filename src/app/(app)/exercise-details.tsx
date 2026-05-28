@@ -11,7 +11,6 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import Markdown from "react-native-markdown-display";
 import { client } from "../../lib/sanity";
 import type { Exercise } from "../../lib/sanity/types.js";
 
@@ -22,10 +21,9 @@ export default function ExerciseDetail() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id?: string }>();
 
+  // State for exercise details
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [loading, setLoading] = useState(true);
-  const [aiGuidance, setAiGuidance] = useState<string>("");
-  const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -73,29 +71,6 @@ export default function ExerciseDetail() {
       cancelled = true;
     };
   }, [id]);
-
-  const getAiGuidance = async () => {
-    if (!exercise?.name) return;
-
-    try {
-      setAiLoading(true);
-
-      const response = await fetch(`${BACKEND_URL}/api/ai`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ exerciseName: exercise.name }),
-      });
-
-      if (!response.ok) throw new Error("Failed to fetch AI guidance");
-
-      const data = await response.json();
-      setAiGuidance(data.message);
-    } catch (error) {
-      console.error("Error fetching AI guidance", error);
-    } finally {
-      setAiLoading(false);
-    }
-  };
 
   // ✅ Hero image source:
   const heroUri = useMemo(() => {
@@ -234,85 +209,10 @@ export default function ExerciseDetail() {
             </View>
           ) : null}
 
-          {/* AI guidence */}
-          {(aiGuidance || aiLoading) && (
-            <View className="mb-6">
-              <View className="flex-row items-center mb-3">
-                <Ionicons name="fitness" size={24} color="#3882f6" />
-                <Text className="text-xl font-semibold text-gray-800 ml-2">
-                  AI Coach says...
-                </Text>
-              </View>
-
-              {aiLoading ? (
-                <View className="bg-gray-50 rounded-xl p-4 items-center">
-                  <ActivityIndicator size="small" color="#3882f6" />
-                  <Text className="text-gray-600 mt-2">
-                    Getting personalized guidance...
-                  </Text>
-                </View>
-              ) : (
-                <View className="bg-blue-50 rounded-xl p-4 border-l-4 border-blue-500">
-                  <Markdown
-                    style={{
-                      body: {
-                        paddingBottom: 20,
-                      },
-                      heading2: {
-                        fontSize: 18,
-                        fontWeight: "bold",
-                        color: "#1f2937",
-                        marginTop: 12,
-                        marginBottom: 6,
-                      },
-                      heading3: {
-                        fontSize: 16,
-                        fontWeight: "600",
-                        color: "#374151",
-                        marginTop: 8,
-                        marginBottom: 4,
-                      },
-                    }}
-                  >
-                    {aiGuidance}
-                  </Markdown>
-                </View>
-              )}
-            </View>
-          )}
-
           {/* --------------- */}
 
           {/* Action Button */}
           <View className="mt-8 gap-2">
-            {/* AI Coach button */}
-            <TouchableOpacity
-              className={`rounded-xl py-4 items-center justify-center active:scale-95 ${aiLoading
-                ? "bg-gray-400"
-                : aiGuidance
-                  ? "bg-green-500"
-                  : "bg-blue-500"
-                }`}
-              onPress={getAiGuidance}
-              disabled={aiLoading}
-              activeOpacity={0.8}
-            >
-              {aiLoading ? (
-                <View className="flex-row items-center">
-                  <ActivityIndicator size="small" color="white" />
-                  <Text className="text-white font-bold text-lg ml-2">
-                    Loading...
-                  </Text>
-                </View>
-              ) : (
-                <Text className="text-white font-bold text-lg text-center">
-                  {aiGuidance
-                    ? "Refresh AI Guidance"
-                    : "Get AI Guidance on Form & Technique"}
-                </Text>
-              )}
-            </TouchableOpacity>
-
             <TouchableOpacity
               className="bg-gray-200 rounded-xl py-4 items-center active:scale-95"
               onPress={() => router.back()}
