@@ -1,4 +1,4 @@
-import React from "react";
+ import React from "react";
 import { Platform, ActivityIndicator, View } from "react-native";
 import { Stack } from "expo-router";
 import { useAuth } from "@clerk/clerk-expo";

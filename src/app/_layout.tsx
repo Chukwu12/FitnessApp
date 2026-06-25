@@ -3,6 +3,7 @@ import { ClerkProvider } from "@clerk/clerk-expo";
 import { Slot } from "expo-router";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { Text, View } from "react-native";
+import Toast from "react-native-toast-message";
 import "@/lib/sanity/typegen";
 
 export default function Layout() {
@@ -22,11 +23,43 @@ export default function Layout() {
   }
 
   return (
-    <ClerkProvider
-      publishableKey={publishableKey}
-      tokenCache={tokenCache}
-    >
-      <Slot />
+    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+      <>
+        <Slot />
+
+        {/* ✅ TOAST PROVIDER */}
+        <Toast
+          position="top"
+          topOffset={60}
+          visibilityTime={2500}
+          config={{
+            success: (props) => (
+              <View className="bg-slate-900 px-4 py-3 rounded-xl border border-green-500">
+                <Text className="text-green-400 font-semibold">
+                  {props.text1}
+                </Text>
+                {props.text2 && (
+                  <Text className="text-slate-300 text-sm">
+                    {props.text2}
+                  </Text>
+                )}
+              </View>
+            ),
+            error: (props) => (
+              <View className="bg-slate-900 px-4 py-3 rounded-xl border border-red-500">
+                <Text className="text-red-400 font-semibold">
+                  {props.text1}
+                </Text>
+                {props.text2 && (
+                  <Text className="text-slate-300 text-sm">
+                    {props.text2}
+                  </Text>
+                )}
+              </View>
+            ),
+          }}
+        />
+      </>
     </ClerkProvider>
   );
 }

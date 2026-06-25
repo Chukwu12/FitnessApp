@@ -22,6 +22,7 @@ interface WorkoutStore {
   workoutExercises: WorkoutExercise[];
   weightUnit: "kg" | "lbs";
   hasHydrated: boolean;
+  history: WorkoutHistoryItem[];
 
   // actions
   addExerciseToWorkout: (exercise: { name: string; sanityId: string }) => void;
@@ -32,12 +33,20 @@ interface WorkoutStore {
   ) => void;
   addNewSet: (exerciseId: string) => void;
   removeExercise: (exerciseId: string) => void;
+  completeWorkout: (duration: number) => void;
 
   setWeightUnit: (unit: "kg" | "lbs") => void;
   resetWorkout: () => void;
 
   // hydration action
   setHasHydrated: (v: boolean) => void;
+}
+
+interface WorkoutHistoryItem {
+  id: string;
+  date: string;
+  exercises: WorkoutExercise[];
+  duration: number;
 }
 
 // ✅ Web storage wrapper (no crash if window/localStorage isn't available)
@@ -74,12 +83,14 @@ const storage = createJSONStorage(() => {
   return AsyncStorage;
 });
 
+// ✅ Workout store with hydration logic
 export const useWorkoutStore = create<WorkoutStore>()(
   persist(
     (set, get) => ({
       workoutExercises: [],
       weightUnit: "lbs",
       hasHydrated: false,
+      history: [],
 
       setHasHydrated: (v) => set({ hasHydrated: v }),
 
@@ -146,6 +157,23 @@ export const useWorkoutStore = create<WorkoutStore>()(
         set({ weightUnit: unit });
       },
 
+      completeWorkout: (duration) => {
+        if (!get().hasHydrated && Platform.OS === "web") return;
+        set((state) => {
+          if (state.workoutExercises.length === 0) return state;
+          const newRecord: WorkoutHistoryItem = {
+            id: crypto?.randomUUID?.() ?? Date.now().toString(),
+            date: new Date().toISOString(),
+            exercises: state.workoutExercises,
+            duration,
+          };
+          return {
+            history: [newRecord, ...state.history],
+            workoutExercises: [],
+          };
+        });
+      },
+
       resetWorkout: () => {
         if (!get().hasHydrated && Platform.OS === "web") return;
         set({ workoutExercises: [] });
@@ -158,11 +186,15 @@ export const useWorkoutStore = create<WorkoutStore>()(
       partialize: (state) => ({
         weightUnit: state.weightUnit,
         workoutExercises: state.workoutExercises,
+        history: state.history,
       }),
 
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
       },
+      
     }
   )
 );
+
+
