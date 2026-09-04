@@ -30,16 +30,13 @@ The result is a small but production-shaped full-stack project that demonstrates
 
 ## Screenshots
 
-No screenshots are committed yet. Add your captures and update this section for a stronger portfolio/recruiter impression.
 
-Suggested filenames:
 
 - `docs/screenshots/home.png`
 - `docs/screenshots/workout-builder.png`
 - `docs/screenshots/exercise-details.png`
 - `docs/screenshots/history.png`
 
-Example Markdown you can paste after adding images:
 
 ```md
 ![Home screen](docs/screenshots/home.png)
