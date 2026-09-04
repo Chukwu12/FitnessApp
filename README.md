@@ -28,20 +28,29 @@ The result is a small but production-shaped full-stack project that demonstrates
 - Persisted Zustand store for app state continuity
 - Shared TypeScript code patterns across app and backend scripts
 
+## Demo
+
+![App demo](docs/screenshots/demo.gif)
+
 ## Screenshots
 
-
-
-- `docs/screenshots/home.png`
-- `docs/screenshots/workout-builder.png`
-- `docs/screenshots/exercise-details.png`
-- `docs/screenshots/history.png`
-
-
-```md
-![Home screen](docs/screenshots/home.png)
-![Workout builder](docs/screenshots/workout-builder.png)
-```
+<table>
+  <tr>
+    <td align="center"><strong>Home</strong><br/><img src="docs/screenshots/home.png" width="250"/></td>
+    <td align="center"><strong>Workout Hub</strong><br/><img src="docs/screenshots/workout-hub.png" width="250"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Active Workout</strong><br/><img src="docs/screenshots/active-workout.png" width="250"/></td>
+    <td align="center"><strong>Exercise Library</strong><br/><img src="docs/screenshots/exercise-library.png" width="250"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Exercise Details (AI)</strong><br/><img src="docs/screenshots/exercise-details.png" width="250"/></td>
+    <td align="center"><strong>Workout History</strong><br/><img src="docs/screenshots/history.png" width="250"/></td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2"><strong>Profile & Achievements</strong><br/><img src="docs/screenshots/profile.png" width="250"/></td>
+  </tr>
+</table>
 
 ## Architecture
 
