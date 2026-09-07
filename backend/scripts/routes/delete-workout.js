@@ -9,13 +9,13 @@ const workoutWriteLimiter = rateLimit({
   limit: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.auth?.userId || ipKeyGenerator(req),
+  keyGenerator: (req) => ipKeyGenerator(req),
   message: {
     error: "Too many workout write requests. Please try again in a minute.",
   },
 });
 
-router.post("/", requireAuth, workoutWriteLimiter, async (req, res) => {
+router.post("/", workoutWriteLimiter, requireAuth, async (req, res) => {
   try {
     const { workoutId } = req.body;
     const userId = req.auth?.userId;
