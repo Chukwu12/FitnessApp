@@ -2,8 +2,9 @@ const express = require("express");
 const router = express.Router();
 const adminClient = require("../sanityClient.cjs");
 const { requireAuth } = require("../../auth");
+const { workoutWriteLimiter } = require("../../rate-limit");
 
-router.post("/", requireAuth, async (req, res) => {
+router.post("/", requireAuth, workoutWriteLimiter, async (req, res) => {
   try {
     const { workoutId } = req.body;
     const userId = req.auth?.userId;

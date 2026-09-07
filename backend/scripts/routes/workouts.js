@@ -2,11 +2,12 @@ const express = require("express");
 const { randomUUID } = require("crypto");
 const adminClient = require("../sanityClient.cjs");
 const { requireAuth } = require("../../auth");
+const { workoutWriteLimiter } = require("../../rate-limit");
 
 const router = express.Router();
 
 
-router.post("/", requireAuth, async (req, res) => {
+router.post("/", requireAuth, workoutWriteLimiter, async (req, res) => {
   console.log("🔥 /api/workouts HIT");
   console.log("Body:", req.body);
 

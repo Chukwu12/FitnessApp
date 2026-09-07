@@ -29,6 +29,7 @@
     "expo-splash-screen": "~0.30.7",
     "expo-status-bar": "~2.2.3",
     "express": "^5.2.1",
+    "express-rate-limit": "8.7.0",
     "groq": "^5.1.0",
     "nativewind": "^4.0.1",
     "openai": "^6.15.0",
