@@ -1,5 +1,5 @@
 // backend/server.js
-require("dotenv").config({ path: __dirname + "/.env" });
+require("./load-env.cjs");
 
 const express = require("express");
 const cors = require("cors");

@@ -1,16 +1,16 @@
-require("dotenv/config");
+require("../load-env.cjs");
 import axios from "axios";
-const sanity = require("../../src/lib/sanity"); // CommonJS import
+const sanity = require("./sanityClient.cjs");
 
 const RAPID_API_KEY = process.env.RAPID_API_KEY || "";
-const BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL?.replace(/\/$/, "");
+const BACKEND_BASE_URL = process.env.BACKEND_BASE_URL?.replace(/\/$/, "");
 
 if (!RAPID_API_KEY) {
   throw new Error("Missing RAPID_API_KEY");
 }
 
 if (!BACKEND_BASE_URL) {
-  throw new Error("Missing EXPO_PUBLIC_BACKEND_URL");
+  throw new Error("Missing BACKEND_BASE_URL");
 }
 
 // Helper: build GIF URL

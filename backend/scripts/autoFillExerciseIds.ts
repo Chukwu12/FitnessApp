@@ -1,5 +1,5 @@
-require("dotenv/config");
-const sanity = require("../../src/lib/sanity");
+require("../load-env.cjs");
+const sanity = require("./sanityClient.cjs");
 const axios = require("axios");
 
 const RAPID_API_KEY = process.env.RAPID_API_KEY;

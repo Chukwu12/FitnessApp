@@ -84,4 +84,21 @@ export default {
       initialValue: true,
     },
   ],
+  preview: {
+    select: {
+      title: 'name',
+      target: 'target',
+      equipment: 'equipment',
+      isActive: 'isActive',
+    },
+    prepare({title, target, equipment, isActive}: {title?: string; target?: string; equipment?: string; isActive?: boolean}) {
+      const subtitleParts = [target, equipment].filter(Boolean)
+      const subtitle = subtitleParts.length > 0 ? subtitleParts.join(' • ') : 'Exercise'
+
+      return {
+        title: title || 'Untitled exercise',
+        subtitle: isActive === false ? `${subtitle} • inactive` : subtitle,
+      }
+    },
+  },
 }

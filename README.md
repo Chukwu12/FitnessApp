@@ -82,7 +82,7 @@ cd sanity && npm install
 
 ### 2. Configure environment
 
-Create `.env` at the repository root:
+Create `.env` at the repository root for Expo/client values:
 
 ```env
 # Expo client (public)
@@ -90,17 +90,21 @@ EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=
 EXPO_PUBLIC_BACKEND_URL=http://localhost:4000
 EXPO_PUBLIC_SANITY_PROJECT_ID=
 EXPO_PUBLIC_SANITY_DATASET=production
+```
+
+Create `backend/.env` for backend-only values:
+
+```env
 
 # Backend
 PORT=4000
+BACKEND_BASE_URL=http://localhost:4000
 CLERK_SECRET_KEY=
 GEMINI_API_KEY=
 RAPID_API_KEY=
 WORKOUT_API_KEY=
 WORKOUT_API_URL=
 WORKOUT_NUTRITION_API_URL=
-
-# Sanity write/debug scripts
 SANITY_PROJECT_ID=
 SANITY_DATASET=production
 SANITY_API_TOKEN=

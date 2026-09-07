@@ -1,5 +1,5 @@
-require("dotenv/config");
-const sanity = require("../../src/lib/sanity"); // adjust path if needed
+require("../load-env.cjs");
+const sanity = require("./sanityClient.cjs");
 
 async function listMissingExerciseIds() {
   try {
