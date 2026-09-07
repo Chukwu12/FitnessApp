@@ -1,10 +1,20 @@
 const express = require("express");
 const { randomUUID } = require("crypto");
+const { ipKeyGenerator, rateLimit } = require("express-rate-limit");
 const adminClient = require("../sanityClient.cjs");
 const { requireAuth } = require("../../auth");
-const { workoutWriteLimiter } = require("../../rate-limit");
 
 const router = express.Router();
+const workoutWriteLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.auth?.userId || ipKeyGenerator(req),
+  message: {
+    error: "Too many workout write requests. Please try again in a minute.",
+  },
+});
 
 
 router.post("/", requireAuth, workoutWriteLimiter, async (req, res) => {
