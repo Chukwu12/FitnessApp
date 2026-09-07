@@ -3,7 +3,7 @@ import { View, Text, ActivityIndicator, TouchableOpacity, ScrollView, Platform, 
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { defineQuery } from "groq";
 import { client } from "@/lib/sanity/client";
-import { useUser } from "@clerk/clerk-expo";
+import { useAuth, useUser } from "@clerk/clerk-expo";
 import { formatDuration } from "lib/utils";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -57,6 +57,7 @@ type WorkoutRecord = {
 
 export default function WorkoutRecord() {
   const { user } = useUser();
+  const { getToken } = useAuth();
   const { workoutId } = useLocalSearchParams<{ workoutId?: string }>();
 
   const [loading, setLoading] = useState(true);
@@ -160,9 +161,18 @@ const deleteWorkout = async () => {
 
   setDeleting(true);
   try {
+    const token = await getToken();
+
+    if (!token) {
+      throw new Error("Missing auth token");
+    }
+
     const res = await fetch(`${BACKEND_URL}/api/delete-workout`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token,
+      },
       body: JSON.stringify({ workoutId }),
     });
 

@@ -1,17 +1,17 @@
 // backend/scripts/forceProxyGifUrls.ts
-require("dotenv").config();
+require("../load-env.cjs");
 
 const { createClient } = require("@sanity/client");
 
-const SANITY_PROJECT_ID = process.env.EXPO_PUBLIC_SANITY_PROJECT_ID;
-const SANITY_DATASET = process.env.EXPO_PUBLIC_SANITY_DATASET || "production";
+const SANITY_PROJECT_ID = process.env.SANITY_PROJECT_ID;
+const SANITY_DATASET = process.env.SANITY_DATASET || "production";
 const SANITY_API_TOKEN = process.env.SANITY_API_TOKEN;
-const BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+const BACKEND_BASE_URL = process.env.BACKEND_BASE_URL;
 
 if (!SANITY_PROJECT_ID)
-  throw new Error("Missing EXPO_PUBLIC_SANITY_PROJECT_ID");
+  throw new Error("Missing SANITY_PROJECT_ID");
 if (!SANITY_API_TOKEN) throw new Error("Missing SANITY_API_TOKEN");
-if (!BACKEND_BASE_URL) throw new Error("Missing EXPO_PUBLIC_BACKEND_URL");
+if (!BACKEND_BASE_URL) throw new Error("Missing BACKEND_BASE_URL");
 
 const sanity = createClient({
   projectId: SANITY_PROJECT_ID,

@@ -31,7 +31,7 @@ const BACKEND_URL =
   process.env.EXPO_PUBLIC_BACKEND_URL?.replace(/\/$/, "") ?? "";
 
 export default function ActiveWorkout() {
-  const { userId, isLoaded } = useAuth();
+  const { userId, isLoaded, getToken } = useAuth();
   const [showExerciseSelection, setShowExerciseSelection] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
@@ -250,6 +250,13 @@ export default function ActiveWorkout() {
         return false;
       }
 
+      const token = await getToken();
+
+      if (!token) {
+        Alert.alert("Not signed in", "Unable to verify your session. Please sign in again.");
+        return false;
+      }
+
       if (!BACKEND_URL) {
         Alert.alert("Missing config", "EXPO_PUBLIC_BACKEND_URL is not set.");
         return false;
@@ -286,7 +293,6 @@ export default function ActiveWorkout() {
       }
 
       const workoutData = {
-        userId,
         date: new Date().toISOString(),
         duration: durationInSeconds,
         exercises: exercisesForSanity,
@@ -301,7 +307,10 @@ export default function ActiveWorkout() {
       // 3) Send to backend (recommended)
       const res = await fetch(`${BACKEND_URL}/api/workouts`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token,
+        },
         body: JSON.stringify(requestPayload),
       });
 

@@ -1,4 +1,4 @@
-require("dotenv/config");
+require("../load-env.cjs");
 const { createClient } = require("@sanity/client");
 
 const rawToken =

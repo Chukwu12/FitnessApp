@@ -1,13 +1,21 @@
-require("dotenv/config");
+require("../load-env.cjs");
 import axios from "axios";
-const sanity = require("../../src/lib/sanity"); // CommonJS import
+const sanity = require("./sanityClient.cjs");
 
 const RAPID_API_KEY = process.env.RAPID_API_KEY || "";
-const RESOLUTION = 180;
+const BACKEND_BASE_URL = process.env.BACKEND_BASE_URL?.replace(/\/$/, "");
+
+if (!RAPID_API_KEY) {
+  throw new Error("Missing RAPID_API_KEY");
+}
+
+if (!BACKEND_BASE_URL) {
+  throw new Error("Missing BACKEND_BASE_URL");
+}
 
 // Helper: build GIF URL
 function getExerciseGifUrl(exerciseId: string) {
-  return `https://exercisedb.p.rapidapi.com/image?exerciseId=${exerciseId}&resolution=${RESOLUTION}&rapidapi-key=${RAPID_API_KEY}`;
+  return `${BACKEND_BASE_URL}/api/gifs/exercise/${exerciseId}`;
 }
 
 // Fuzzy match function to handle minor name differences

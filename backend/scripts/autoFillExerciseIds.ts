@@ -1,8 +1,12 @@
-require("dotenv/config");
-const sanity = require("../../src/lib/sanity");
+require("../load-env.cjs");
+const sanity = require("./sanityClient.cjs");
 const axios = require("axios");
 
-const RAPID_API_KEY = process.env.EXPO_PUBLIC_RAPID_API_KEY;
+const RAPID_API_KEY = process.env.RAPID_API_KEY;
+
+if (!RAPID_API_KEY) {
+  throw new Error("Missing RAPID_API_KEY");
+}
 
 interface RapidExercise {
   id: string;

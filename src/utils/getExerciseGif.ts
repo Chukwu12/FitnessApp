@@ -1,5 +1,6 @@
-const RAPID_API_KEY = process.env.EXPO_PUBLIC_RAPID_API_KEY;
-const RESOLUTION = 180;
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL?.replace(/\/$/, "");
 
-export const getExerciseGif = (exerciseId: string) =>
-  `https://exercisedb.p.rapidapi.com/image?exerciseId=${exerciseId}&resolution=${RESOLUTION}&rapidapi-key=${process.env.EXPO_PUBLIC_RAPID_API_KEY}`;
+export const getExerciseGif = (exerciseId: string) => {
+  if (!exerciseId || !BACKEND_URL) return undefined;
+  return `${BACKEND_URL}/api/gifs/exercise/${exerciseId}`;
+};
