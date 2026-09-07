@@ -1,20 +1,18 @@
 const express = require("express");
 const { randomUUID } = require("crypto");
 const adminClient = require("../sanityClient.cjs");
+const { requireAuth } = require("../../auth");
 
 const router = express.Router();
 
 
-router.post("/", async (req, res) => {
+router.post("/", requireAuth, async (req, res) => {
   console.log("🔥 /api/workouts HIT");
   console.log("Body:", req.body);
 
   try {
-    const { userId, date, duration, exercises } = req.body || {};
-
-    if (!userId) {
-      return res.status(400).json({ error: "Missing userId" });
-    }
+    const { date, duration, exercises } = req.body || {};
+    const userId = req.auth?.userId;
 
     if (!date) {
       return res.status(400).json({ error: "Missing date" });

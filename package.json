@@ -10,6 +10,7 @@
     "deploy": "npx expo export -p web && npx eas-cli@latest deploy"
   },
   "dependencies": {
+    "@clerk/backend": "3.17.1",
     "@clerk/clerk-expo": "^2.19.9",
     "@expo/vector-icons": "^14.1.0",
     "@google/generative-ai": "^0.24.1",
