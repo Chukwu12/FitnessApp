@@ -55,7 +55,7 @@ export default function Layout() {
       <Tabs.Screen
         name="history"
         options={{
-          title: "History",
+          title: "Workout History",
           tabBarIcon: ({ color, size }) => (
             <AntDesign name="clockcircleo" color={color} size={size} />
           ),

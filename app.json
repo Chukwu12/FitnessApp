@@ -3,9 +3,21 @@
     "scheme": "acme",
     "userInterfaceStyle": "automatic",
     "orientation": "default",
-   "web": { "bundler": "metro", "output": "static" },
-   "plugins": ["expo-router"],
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router"
+    ],
     "name": "fit-app",
-    "slug": "fit-app"
+    "slug": "fit-app",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "826d504e-924e-4dfd-aa86-6201fc51adbd"
+      }
+    },
+    "owner": "o_chukwu"
   }
 }

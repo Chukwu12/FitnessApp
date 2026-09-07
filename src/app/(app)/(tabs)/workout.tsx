@@ -301,7 +301,7 @@ function Workout() {
           />
           <QuickAction
             icon="time-outline"
-            label="History"
+            label="Workout History"
             onPress={() => router.push("/(tabs)/history")}
           />
           <QuickAction

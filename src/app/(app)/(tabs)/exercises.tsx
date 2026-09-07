@@ -43,6 +43,7 @@ export const exercisesQuery = defineQuery(`
 export default function Exercises() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
@@ -52,10 +53,12 @@ export default function Exercises() {
   // -------------------
   const fetchExercises = useCallback(async () => {
     try {
+      setErrorMessage(null);
       const data = await client.fetch(exercisesQuery);
       setExercises(data ?? []);
     } catch (error) {
       console.error("Error fetching exercises:", error);
+      setErrorMessage("Could not load exercises. Pull down to try again.");
     } finally {
       setLoading(false);
     }
@@ -195,12 +198,17 @@ export default function Exercises() {
           <View className="items-center p-8">
             <Ionicons name="fitness-outline" size={64} color="#64748B" />
             <Text className="mt-2 text-lg font-semibold text-white">
-              {searchQuery ? "No exercises found" : "No exercises yet"}
+              {errorMessage
+                ? "Exercises unavailable"
+                : searchQuery
+                  ? "No exercises found"
+                  : "No exercises yet"}
             </Text>
             <Text className="text-slate-400 text-center mt-1">
-              {searchQuery
-                ? "Try adjusting your search"
-                : "Your exercises will appear here"}
+              {errorMessage ||
+                (searchQuery
+                  ? "Try adjusting your search"
+                  : "Your exercises will appear here")}
             </Text>
           </View>
         }

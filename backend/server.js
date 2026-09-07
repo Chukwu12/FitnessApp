@@ -16,31 +16,42 @@ const app = express();
 // ✅ DEFINE PORT FIRST
 const PORT = process.env.PORT || 4000;
 
+const allowedOrigins = new Set([
+  "https://scaling-goggles-9qgjg64j55w3xx5v-8081.app.github.dev",
+  "http://localhost:8081",
+  "http://localhost:19006",
+  "http://localhost:19000",
+]);
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  if (allowedOrigins.has(origin)) return true;
+
+  try {
+    const { hostname, protocol } = new URL(origin);
+    return (
+      (protocol === "http:" &&
+        (hostname === "localhost" || hostname === "127.0.0.1")) ||
+      (protocol === "https:" && hostname.endsWith(".app.github.dev"))
+    );
+  } catch {
+    return false;
+  }
+};
+
 const corsOptions = {
-  origin: [
-    "https://scaling-goggles-9qgjg64j55w3xx5v-8081.app.github.dev",
-    "http://localhost:8081",
-    "http://localhost:19006",
-    "http://localhost:19000",
-  ],
+  origin: (origin, callback) => {
+    if (isAllowedOrigin(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS origin not allowed: ${origin}`));
+    }
+  },
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 app.use(cors(corsOptions));
-// ✅ Always allow preflight to succeed
-app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      "Content-Type, Authorization"
-    );
-    return res.sendStatus(204);
-  }
-  next();
-});
 
 app.use(express.json());
 
