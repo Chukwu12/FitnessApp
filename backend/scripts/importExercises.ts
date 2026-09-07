@@ -9,9 +9,8 @@ const SANITY_PROJECT_ID = process.env.EXPO_PUBLIC_SANITY_PROJECT_ID;
 const SANITY_DATASET = process.env.EXPO_PUBLIC_SANITY_DATASET || "production";
 const SANITY_API_TOKEN = process.env.SANITY_API_TOKEN;
 
-// ✅ RapidAPI key
-const RAPID_API_KEY =
-  process.env.EXPO_PUBLIC_RAPID_API_KEY || process.env.RAPID_API_KEY;
+const RAPID_API_KEY = process.env.RAPID_API_KEY;
+const BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL?.replace(/\/$/, "");
 
 if (!SANITY_PROJECT_ID) {
   throw new Error("Missing EXPO_PUBLIC_SANITY_PROJECT_ID in .env");
@@ -23,9 +22,10 @@ if (!SANITY_API_TOKEN) {
   throw new Error("Missing SANITY_API_TOKEN in .env (required for writes)");
 }
 if (!RAPID_API_KEY) {
-  throw new Error(
-    "Missing EXPO_PUBLIC_RAPID_API_KEY (or RAPID_API_KEY) in .env"
-  );
+  throw new Error("Missing RAPID_API_KEY in .env");
+}
+if (!BACKEND_BASE_URL) {
+  throw new Error("Missing EXPO_PUBLIC_BACKEND_URL in .env");
 }
 
 const sanity = createClient({
@@ -71,12 +71,6 @@ async function fetchExercisesFromRapidAPI(
     console.error("Error fetching exercises from RapidAPI:", error);
     return [];
   }
-}
-
-const BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
-
-if (!BACKEND_BASE_URL) {
-  throw new Error("Missing EXPO_PUBLIC_BACKEND_URL ||  in .env");
 }
 
 function getExerciseGifUrl(exerciseId: string) {

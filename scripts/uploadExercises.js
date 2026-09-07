@@ -21,12 +21,19 @@ const client = createClient({
 // -----------------------------
 const API_BASE = "https://exercisedb.p.rapidapi.com/exercises";
 const RAPID_API_KEY = process.env.RAPID_API_KEY;
+const BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL?.replace(/\/$/, "");
 const API_HEADERS = {
   "X-RapidAPI-Key": RAPID_API_KEY,
   "X-RapidAPI-Host": "exercisedb.p.rapidapi.com",
 };
 
-const RESOLUTION = 180; // GIF resolution (free tier)
+if (!RAPID_API_KEY) {
+  throw new Error("Missing RAPID_API_KEY");
+}
+
+if (!BACKEND_BASE_URL) {
+  throw new Error("Missing EXPO_PUBLIC_BACKEND_URL");
+}
 
 // -----------------------------
 // 3️⃣ Format exercises for Sanity
@@ -40,8 +47,7 @@ const formatExercise = (ex) => ({
   target: ex.target || 'N/A',
   equipment: ex.equipment || 'N/A',
   instructions: ex.instructions || 'No instructions',
-  // Dynamically generate GIF URL using RapidAPI endpoint
-  gifUrl: `https://exercisedb.p.rapidapi.com/image?exerciseId=${ex.id}&resolution=${RESOLUTION}&rapidapi-key=${RAPID_API_KEY}`,
+  gifUrl: `${BACKEND_BASE_URL}/api/gifs/exercise/${ex.id}`,
   category: ex.category || 'General', // optional extra
   level: ex.level || 'Intermediate',  // optional extra
 });

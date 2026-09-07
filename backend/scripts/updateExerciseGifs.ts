@@ -6,15 +6,12 @@ const { createClient } = require("@sanity/client");
 const SANITY_PROJECT_ID = process.env.EXPO_PUBLIC_SANITY_PROJECT_ID;
 const SANITY_DATASET = process.env.EXPO_PUBLIC_SANITY_DATASET || "production";
 const SANITY_API_TOKEN = process.env.SANITY_API_TOKEN;
-
-// ✅ use your standardized public key name (still fine in scripts)
-const RAPID_API_KEY = process.env.EXPO_PUBLIC_RAPID_API_KEY;
-const RESOLUTION = 180;
+const BACKEND_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL?.replace(/\/$/, "");
 
 if (!SANITY_PROJECT_ID)
   throw new Error("Missing EXPO_PUBLIC_SANITY_PROJECT_ID");
 if (!SANITY_API_TOKEN) throw new Error("Missing SANITY_API_TOKEN");
-if (!RAPID_API_KEY) throw new Error("Missing EXPO_PUBLIC_RAPID_API_KEY");
+if (!BACKEND_BASE_URL) throw new Error("Missing EXPO_PUBLIC_BACKEND_URL");
 
 const sanity = createClient({
   projectId: SANITY_PROJECT_ID,
@@ -25,7 +22,7 @@ const sanity = createClient({
 });
 
 function getExerciseGifUrl(exerciseId: string) {
-  return `https://exercisedb.p.rapidapi.com/image?exerciseId=${exerciseId}&resolution=${RESOLUTION}&rapidapi-key=${RAPID_API_KEY}`;
+  return `${BACKEND_BASE_URL}/api/gifs/exercise/${exerciseId}`;
 }
 
 function needsUpdate(ex: { exerciseId?: any; gifUrl?: string }) {
