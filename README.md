@@ -163,6 +163,8 @@ Maintenance scripts (examples):
 - `npx ts-node backend/scripts/updateExerciseGifs.ts`
 - `npx ts-node backend/scripts/updateExerciseIdsAndGifs.ts`
 - `npx ts-node backend/scripts/importExercises.ts`
+- `SYNC_EXERCISES_DRY_RUN=1 npx ts-node backend/scripts/syncExercisesFromRapidApi.ts`
+- `npx ts-node backend/scripts/syncExercisesFromRapidApi.ts`
 
 ## API Surface
 
